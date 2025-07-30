@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { SagaEventModule } from './saga-event-module/saga-event.module';
 import { SimpleModule } from './sample/simple/simple.module';
 import { ECommerceModule } from './sample/ecommerce/ecommerce.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
-  imports: [SagaEventModule, SimpleModule, ECommerceModule],
+  imports: [DatabaseModule, SagaEventModule, SimpleModule, ECommerceModule],
   controllers: [AppController],
   providers: [AppService],
 })
