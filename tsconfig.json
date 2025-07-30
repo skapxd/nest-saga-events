@@ -10,6 +10,9 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "#/*": ["src/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -17,5 +20,10 @@
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
+  },
+  "ts-node": {
+    "require": [
+      "tsconfig-paths/register"
+    ]
   }
 }
