@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import {
+  EmitterInfo,
+  ListenerInfo,
+} from '../interfaces/event-documentation.interfaces';
+import {
   EMITS_EVENT_METADATA_KEY,
   EmitsEventMetadata,
 } from '../decorators/emits-event.decorator';
@@ -12,28 +16,20 @@ import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join, parse } from 'path';
 import { existsSync } from 'fs';
 
-interface EmitterInfo {
-  eventName: string;
-  className: string;
-  methodName: string;
-  description: string;
-}
-
-interface ListenerInfo {
-  eventName: string;
-  className: string;
-  methodName: string;
-}
-
 @Injectable()
 export class EventDocumentationService {
   private readonly logger = new Logger(EventDocumentationService.name);
   private flowGraphContent = 'graph TD;\n\n    Empty["No events found"];';
+  private sagaStarters: EmitterInfo[] = [];
 
   constructor(private readonly discoveryService: DiscoveryService) {}
 
   public getFlowGraph(): string {
     return this.flowGraphContent;
+  }
+
+  public getSagaStarters(): EmitterInfo[] {
+    return this.sagaStarters;
   }
 
   async generate(): Promise<void> {
@@ -42,10 +38,36 @@ export class EventDocumentationService {
     const emitters = await this.discoverEmitters();
     const listeners = await this.discoverListeners();
 
+    this.discoverSagaStarters(emitters, listeners);
     await this.generateCatalog(emitters, listeners);
     await this.generateFlowGraph(emitters, listeners);
 
     this.logger.log('✅ Event documentation generated successfully.');
+  }
+
+  private discoverSagaStarters(
+    emitters: EmitterInfo[],
+    listeners: ListenerInfo[],
+  ) {
+    const listenerMethodIds = new Set(
+      listeners.map((l) => `${l.className}.${l.methodName}`),
+    );
+
+    const starterMethods = new Map<string, EmitterInfo>();
+
+    for (const emitter of emitters) {
+      const emitterMethodId = `${emitter.className}.${emitter.methodName}`;
+      // A method is a starter if it emits events but is NOT triggered by one.
+      if (!listenerMethodIds.has(emitterMethodId)) {
+        // We only care about the 'onInit' event for the starter list
+        if (emitter.eventName.endsWith('.init')) {
+          starterMethods.set(emitterMethodId, emitter);
+        }
+      }
+    }
+
+    this.sagaStarters = Array.from(starterMethods.values());
+    this.logger.log(`Discovered ${this.sagaStarters.length} saga starter(s).`);
   }
 
   private async discoverEmitters(): Promise<EmitterInfo[]> {

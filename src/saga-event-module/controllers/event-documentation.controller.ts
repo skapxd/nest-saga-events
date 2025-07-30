@@ -9,6 +9,11 @@ import { EventDocumentationService } from '../services/event-documentation.servi
 import { JsonDatabaseService } from '#/database/json/json-database.service';
 import { EventPayload } from '../interfaces/event.interfaces';
 
+import { EmitterInfo } from '../interfaces/event-documentation.interfaces';
+
+// The type of the object stored in the database
+type LoggedEvent = EventPayload<any> & { eventName: string };
+
 @Controller('event-docs')
 export class EventDocumentationController {
   constructor(
@@ -22,12 +27,58 @@ export class EventDocumentationController {
     return this.eventDocumentationService.getFlowGraph();
   }
 
-  @Get('saga/:correlationId')
-  async getSagaByCorrelationId(@Param('correlationId') correlationId: string) {
-    const sagaEvents = await this.dbService.findInCollection<EventPayload<any>>(
+  @Get('sagas')
+  getAvailableSagas(): EmitterInfo[] {
+    return this.eventDocumentationService.getSagaStarters();
+  }
+
+  @Get('sagas/executed')
+  async getExecutedSagas() {
+    const startingEvents = await this.dbService.findInCollection<LoggedEvent>(
       'events',
-      (event: EventPayload<any>) =>
-        event.metadata.correlationId === correlationId,
+      (event) => event.metadata.causationId === null,
+    );
+
+    // Group by saga name (e.g., 'user.creation.init') and count instances
+    const sagas = startingEvents.reduce(
+      (acc, event) => {
+        const sagaName = event.eventName;
+        if (!acc[sagaName]) {
+          acc[sagaName] = {
+            name: sagaName,
+            instances: [],
+          };
+        }
+        acc[sagaName].instances.push({
+          correlationId: event.metadata.correlationId,
+          startedAt: event.metadata.timestamp,
+          actor: event.metadata.actor,
+        });
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          name: string;
+          instances: {
+            correlationId: string;
+            startedAt: Date;
+            actor: any;
+          }[];
+        }
+      >,
+    );
+
+    return Object.values(sagas);
+  }
+
+  @Get('saga/:correlationId')
+  async getSagaByCorrelationId(
+    @Param('correlationId') correlationId: string,
+  ): Promise<LoggedEvent[]> {
+    const sagaEvents = await this.dbService.findInCollection<LoggedEvent>(
+      'events',
+      (event) => event.metadata.correlationId === correlationId,
     );
 
     if (!sagaEvents || sagaEvents.length === 0) {
@@ -38,7 +89,7 @@ export class EventDocumentationController {
 
     // Sort events by timestamp to see the flow
     return sagaEvents.sort(
-      (a: EventPayload<any>, b: EventPayload<any>) =>
+      (a, b) =>
         new Date(a.metadata.timestamp).getTime() -
         new Date(b.metadata.timestamp).getTime(),
     );
