@@ -111,14 +111,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **VERIFICACIÓN DE FASE 1:** Ejecutar `yarn build` para asegurar que los servicios base compilan.
-- [ ] **COMMIT DE FASE 1:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN DE FASE 1:** Ejecutar `yarn build` para asegurar que los servicios base compilan.
+- [x] **COMMIT DE FASE 1:** Crear un commit semántico en español.
 
 ---
 
 ## Fase 2: Creación y Propagación de Metadatos
 
-- [ ] **Tarea 6: Implementar el `EventMetadataHelper`.**
+- [x] **Tarea 6: Implementar el `EventMetadataHelper`.**
   - **Descripción:** Crear el servicio que centraliza la lógica de creación de metadatos, utilizando el `RequestContextService`.
   - **Archivo a crear:** `src/saga-event-module/services/event-metadata.helper.ts`
   - **Lógica Clave:**
@@ -151,7 +151,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **Tarea 7: Implementar el `RequestContextMiddleware`.**
+- [x] **Tarea 7: Implementar el `RequestContextMiddleware`.**
   - **Descripción:** Crear el middleware que inicia el contexto en cada petición HTTP.
   - **Archivo a crear:** `src/saga-event-module/middleware/request-context.middleware.ts`
   - **Lógica Clave:**
