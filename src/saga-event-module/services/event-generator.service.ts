@@ -1,31 +1,24 @@
-import { Command, CommandRunner } from 'nest-commander';
-import { format } from 'prettier';
+import { Injectable, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { Logger } from '@nestjs/common';
-import {
-  EMITS_EVENT_METADATA_KEY,
-  EmitsEventMetadata,
-} from '../decorators/emits-event.decorator';
+import { format } from 'prettier';
 import { glob } from 'glob';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, parse } from 'path';
 import { existsSync } from 'fs';
+import {
+  EMITS_EVENT_METADATA_KEY,
+  EmitsEventMetadata,
+} from '../decorators/emits-event.decorator';
 
-@Command({
-  name: 'generate-docs',
-  description: 'Generate event documentation and type definitions',
-})
-export class GenerateDocsCommand extends CommandRunner {
-  private readonly logger = new Logger(GenerateDocsCommand.name);
+@Injectable()
+export class EventGeneratorService {
+  private readonly logger = new Logger(EventGeneratorService.name);
 
-  constructor(private readonly discoveryService: DiscoveryService) {
-    super();
-  }
+  constructor(private readonly discoveryService: DiscoveryService) {}
 
-  async run(): Promise<void> {
-    this.logger.log('Starting documentation generation...');
+  async generate(): Promise<void> {
+    this.logger.log('Starting event types generation...');
 
-    // Discover Emitters
     const providersWithEmitters =
       await this.discoveryService.providersWithMetaAtKey<EmitsEventMetadata[]>(
         EMITS_EVENT_METADATA_KEY,
@@ -43,10 +36,6 @@ export class GenerateDocsCommand extends CommandRunner {
 
     for (const provider of providersWithEmitters) {
       const metadataList = provider.meta;
-
-      this.logger.log(
-        `Processing provider: ${provider.discoveredClass.name} with ${metadataList.length} event decorators.`,
-      );
 
       for (const metadata of metadataList) {
         if (metadata.onInit) {
@@ -79,7 +68,6 @@ export class GenerateDocsCommand extends CommandRunner {
       'generated-events.ts',
     );
 
-    // --- Optimization: Check for changes before writing ---
     if (existsSync(outputPath)) {
       const existingContent = await readFile(outputPath, 'utf-8');
       if (existingContent === formattedContent) {
@@ -90,7 +78,6 @@ export class GenerateDocsCommand extends CommandRunner {
       }
     }
 
-    // --- Write file if it's new or has changed ---
     const outputDir = parse(outputPath).dir;
     if (!existsSync(outputDir)) {
       await mkdir(outputDir, { recursive: true });

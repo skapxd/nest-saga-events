@@ -1,4 +1,11 @@
-import { Global, Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import {
+  Global,
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  OnModuleInit,
+  Inject,
+} from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RequestContextService } from './services/request-context.service';
 import { EventMetadataHelper } from './services/event-metadata.helper';
@@ -6,8 +13,8 @@ import { EventLogService } from './services/event-log.service';
 import { RequestContextMiddleware } from './middleware/request-context.middleware';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from './interfaces/event.interfaces';
-import { GenerateDocsCommand } from './commands/generate-docs.command';
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
+import { EventGeneratorService } from './services/event-generator.service';
 
 export class TypedEventEmitter {
   constructor(private readonly eventEmitter: EventEmitter2) {}
@@ -38,11 +45,20 @@ export class TypedEventEmitter {
         new TypedEventEmitter(eventEmitter),
       inject: [EventEmitter2],
     },
-    GenerateDocsCommand,
+    EventGeneratorService,
   ],
   exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
 })
-export class SagaEventModule implements NestModule {
+export class SagaEventModule implements NestModule, OnModuleInit {
+  constructor(
+    @Inject(EventGeneratorService)
+    private readonly eventGeneratorService: EventGeneratorService,
+  ) {}
+
+  async onModuleInit() {
+    await this.eventGeneratorService.generate();
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(RequestContextMiddleware).forRoutes('*');
   }
