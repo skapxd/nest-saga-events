@@ -1,9 +1,10 @@
 import { OnEvent } from '@nestjs/event-emitter';
+import { OnEventOptions } from '@nestjs/event-emitter/dist/interfaces';
 // import { SagaRegistryService } from '../services/saga-registry.service';
 
 export const OnEventDoc = (
   eventName: string,
-  options?: any,
+  options?: OnEventOptions,
 ): MethodDecorator => {
   return (
     target: object,
@@ -20,6 +21,7 @@ export const OnEventDoc = (
       `Registered listener for event ${eventName} on ${className}.${methodName}`,
     );
 
-    return OnEvent(eventName, options)(target, propertyKey, descriptor);
+    const asyncOptions = { ...options, async: true, suppressErrors: false };
+    return OnEvent(eventName, asyncOptions)(target, propertyKey, descriptor);
   };
 };

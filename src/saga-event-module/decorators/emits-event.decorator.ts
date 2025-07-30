@@ -17,10 +17,16 @@ export const EmitsEvent = (options: EmitsEventOptions): MethodDecorator => {
   ) => {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (
+      this: {
+        eventEmitter: EventEmitter2;
+        eventMetadataHelper: EventMetadataHelper;
+      },
+      ...args: any[]
+    ) {
       // These services would ideally be injected or accessed via a static context
-      const eventEmitter = this.eventEmitter as EventEmitter2;
-      const metadataHelper = this.eventMetadataHelper as EventMetadataHelper;
+      const eventEmitter = this.eventEmitter;
+      const metadataHelper = this.eventMetadataHelper;
 
       if (!eventEmitter || !metadataHelper) {
         throw new Error(
