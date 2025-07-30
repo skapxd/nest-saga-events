@@ -6,7 +6,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
 
 ## Fase 0: Prerrequisitos y Estructura
 
-- [ ] **Tarea 1: Instalar Dependencias.**
+- [x] **Tarea 1: Instalar Dependencias.**
   - **Descripción:** Añadir las dependencias necesarias para el funcionamiento del módulo.
   - **Acción:** Ejecutar los siguientes comandos:
     ```bash
@@ -15,7 +15,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     yarn add -D @types/node
     ```
 
-- [ ] **Tarea 2: Crear la Estructura de Directorios.**
+- [x] **Tarea 2: Crear la Estructura de Directorios.**
   - **Descripción:** Crear la estructura de carpetas limpia y plana para el nuevo módulo.
   - **Acción:** Ejecutar el siguiente comando:
     ```bash
@@ -23,6 +23,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     ```
 
 - [ ] **VERIFICACIÓN DE FASE 0:** Ejecutar `yarn build` para asegurar que el setup inicial del proyecto es correcto.
+- [ ] **COMMIT DE FASE 0:** Crear un commit semántico en español.
 
 ---
 
@@ -111,6 +112,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     ```
 
 - [ ] **VERIFICACIÓN DE FASE 1:** Ejecutar `yarn build` para asegurar que los servicios base compilan.
+- [ ] **COMMIT DE FASE 1:** Crear un commit semántico en español.
 
 ---
 
@@ -174,6 +176,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     ```
 
 - [ ] **VERIFICACIÓN DE FASE 2:** Ejecutar `yarn build`.
+- [ ] **COMMIT DE FASE 2:** Crear un commit semántico en español.
 
 ---
 
@@ -235,6 +238,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     ```
 
 - [ ] **VERIFICACIÓN DE FASE 3:** Ejecutar `yarn build`.
+- [ ] **COMMIT DE FASE 3:** Crear un commit semántico en español.
 
 ---
 
@@ -286,6 +290,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     ```
 
 - [ ] **VERIFICACIÓN DE FASE 4:** Ejecutar `yarn build`.
+- [ ] **COMMIT DE FASE 4:** Crear un commit semántico en español.
 
 ---
 
@@ -307,3 +312,4 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
       ```
 
 - [ ] **VERIFICACIÓN FINAL:** Ejecutar `yarn build`.
+- [ ] **COMMIT FINAL:** Crear un commit semántico en español.
