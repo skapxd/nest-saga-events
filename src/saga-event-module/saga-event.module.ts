@@ -18,7 +18,14 @@ export class TypedEventEmitter {
 
 @Global()
 @Module({
-  imports: [EventEmitterModule.forRoot()],
+  imports: [
+    EventEmitterModule.forRoot({
+      global: true,
+      wildcard: true,
+      delimiter: '.',
+      verboseMemoryLeak: true,
+    }),
+  ],
   providers: [
     RequestContextService,
     SagaRegistryService,

@@ -311,5 +311,5 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
           user.creation.success -- Triggers --> NotificationService.sendWelcomeEmail;
       ```
 
-- [ ] **VERIFICACIÓN FINAL:** Ejecutar `yarn build`.
-- [ ] **COMMIT FINAL:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN FINAL:** Ejecutar `yarn build`.
+- [x] **COMMIT FINAL:** Crear un commit semántico en español.
