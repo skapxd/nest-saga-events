@@ -26,7 +26,7 @@ export function AuditMethod(): MethodDecorator {
     descriptor.value = async function (...args: any[]) {
       // 'this' refers to the instance of the service where the decorator is applied.
       // We rely on the service having 'eventEmitter' injected.
-      const eventEmitter = (this as any).eventEmitter as EventEmitter2;
+      const eventEmitter = this.eventEmitter as EventEmitter2;
 
       if (!eventEmitter) {
         logger.error(
