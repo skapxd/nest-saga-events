@@ -8,15 +8,48 @@ graph TD;
     N0_UserService_createUser["UserService.createUser"]
     N0_UserService_createUser["UserService.createUser"]
     N0_UserService_createUser["UserService.createUser"]
-    N1_NotificationService_handleUserCreatedSuccess["NotificationService.handleUserCreatedSuccess"]
-    N2_NotificationService_handleUserCreatedFailure["NotificationService.handleUserCreatedFailure"]
-    N3_user_creation_init("user.creation.init")
-    N4_user_created_success("user.created.success")
-    N5_user_created_failure("user.created.failure")
+    N1_OrderService_placeOrder["OrderService.placeOrder"]
+    N1_OrderService_placeOrder["OrderService.placeOrder"]
+    N1_OrderService_placeOrder["OrderService.placeOrder"]
+    N2_InventoryService_handleOrderPlacement["InventoryService.handleOrderPlacement"]
+    N2_InventoryService_handleOrderPlacement["InventoryService.handleOrderPlacement"]
+    N3_PaymentService_handleInventoryReserved["PaymentService.handleInventoryReserved"]
+    N3_PaymentService_handleInventoryReserved["PaymentService.handleInventoryReserved"]
+    N4_NotificationService_handleUserCreatedSuccess["NotificationService.handleUserCreatedSuccess"]
+    N5_NotificationService_handleUserCreatedFailure["NotificationService.handleUserCreatedFailure"]
+    N6_NotificationService_handleOrderConfirmed["NotificationService.handleOrderConfirmed"]
+    N7_NotificationService_handleInventoryFailure["NotificationService.handleInventoryFailure"]
+    N8_NotificationService_handlePaymentFailure["NotificationService.handlePaymentFailure"]
+    N2_InventoryService_handleOrderPlacement["InventoryService.handleOrderPlacement"]
+    N9_InventoryService_handlePaymentFailure["InventoryService.handlePaymentFailure"]
+    N3_PaymentService_handleInventoryReserved["PaymentService.handleInventoryReserved"]
+    N10_user_creation_init("user.creation.init")
+    N11_user_created_success("user.created.success")
+    N12_user_created_failure("user.created.failure")
+    N13_order_placement_init("order.placement.init")
+    N14_order_confirmed_success("order.confirmed.success")
+    N15_order_placement_failed("order.placement.failed")
+    N16_inventory_reserved_success("inventory.reserved.success")
+    N17_inventory_reserved_failure("inventory.reserved.failure")
+    N18_payment_processed_success("payment.processed.success")
+    N19_payment_processed_failure("payment.processed.failure")
 
-    N0_UserService_createUser -- Emits --> N3_user_creation_init
-    N0_UserService_createUser -- Emits --> N4_user_created_success
-    N0_UserService_createUser -- Emits --> N5_user_created_failure
-    N4_user_created_success -- Triggers --> N1_NotificationService_handleUserCreatedSuccess
-    N5_user_created_failure -- Triggers --> N2_NotificationService_handleUserCreatedFailure
+    N0_UserService_createUser -- Emits --> N10_user_creation_init
+    N0_UserService_createUser -- Emits --> N11_user_created_success
+    N0_UserService_createUser -- Emits --> N12_user_created_failure
+    N1_OrderService_placeOrder -- Emits --> N13_order_placement_init
+    N1_OrderService_placeOrder -- Emits --> N14_order_confirmed_success
+    N1_OrderService_placeOrder -- Emits --> N15_order_placement_failed
+    N2_InventoryService_handleOrderPlacement -- Emits --> N16_inventory_reserved_success
+    N2_InventoryService_handleOrderPlacement -- Emits --> N17_inventory_reserved_failure
+    N3_PaymentService_handleInventoryReserved -- Emits --> N18_payment_processed_success
+    N3_PaymentService_handleInventoryReserved -- Emits --> N19_payment_processed_failure
+    N11_user_created_success -- Triggers --> N4_NotificationService_handleUserCreatedSuccess
+    N12_user_created_failure -- Triggers --> N5_NotificationService_handleUserCreatedFailure
+    N14_order_confirmed_success -- Triggers --> N6_NotificationService_handleOrderConfirmed
+    N17_inventory_reserved_failure -- Triggers --> N7_NotificationService_handleInventoryFailure
+    N19_payment_processed_failure -- Triggers --> N8_NotificationService_handlePaymentFailure
+    N13_order_placement_init -- Triggers --> N2_InventoryService_handleOrderPlacement
+    N19_payment_processed_failure -- Triggers --> N9_InventoryService_handlePaymentFailure
+    N16_inventory_reserved_success -- Triggers --> N3_PaymentService_handleInventoryReserved
 ```
