@@ -289,14 +289,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **VERIFICACIÓN DE FASE 4:** Ejecutar `yarn build`.
-- [ ] **COMMIT DE FASE 4:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN DE FASE 4:** Ejecutar `yarn build`.
+- [x] **COMMIT DE FASE 4:** Crear un commit semántico en español.
 
 ---
 
 ## Fase 5: Herramientas y Documentación
 
-- [ ] **Tarea 13: Implementar el Generador de Documentación.**
+- [x] **Tarea 13: Implementar el Generador de Documentación.**
   - **Descripción:** Crear el comando `generate-docs` que lee del `SagaRegistryService` para generar los artefactos.
   - **Archivo a crear:** `src/saga-event-module/commands/generate-docs.command.ts`
   - **Lógica Clave:**
