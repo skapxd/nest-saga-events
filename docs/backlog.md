@@ -22,14 +22,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     mkdir -p src/saga-event-module/decorators src/saga-event-module/services src/saga-event-module/interfaces src/saga-event-module/commands src/saga-event-module/middleware
     ```
 
-- [ ] **VERIFICACIÓN DE FASE 0:** Ejecutar `yarn build` para asegurar que el setup inicial del proyecto es correcto.
-- [ ] **COMMIT DE FASE 0:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN DE FASE 0:** Ejecutar `yarn build` para asegurar que el setup inicial del proyecto es correcto.
+- [x] **COMMIT DE FASE 0:** Crear un commit semántico en español.
 
 ---
 
 ## Fase 1: El Núcleo del Contexto y los Datos
 
-- [ ] **Tarea 3: Definir Interfaces Base.**
+- [x] **Tarea 3: Definir Interfaces Base.**
   - **Descripción:** Crear el archivo de interfaces que definirá la estructura de todos nuestros eventos.
   - **Archivo a crear:** `src/saga-event-module/interfaces/event.interfaces.ts`
   - **Contenido de Referencia:**
@@ -54,7 +54,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **Tarea 4: Implementar el `RequestContextService`.**
+- [x] **Tarea 4: Implementar el `RequestContextService`.**
   - **Descripción:** Crear el servicio para la propagación de contexto implícito usando `AsyncLocalStorage`.
   - **Archivo a crear:** `src/saga-event-module/services/request-context.service.ts`
   - **Lógica Clave:**
@@ -84,7 +84,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **Tarea 5: Implementar el `SagaRegistryService`.**
+- [x] **Tarea 5: Implementar el `SagaRegistryService`.**
   - **Descripción:** Crear el servicio singleton que registrará la información de los decoradores para la generación de documentos.
   - **Archivo a crear:** `src/saga-event-module/services/saga-registry.service.ts`
   - **Lógica Clave:**
