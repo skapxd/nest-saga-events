@@ -1,8 +1,8 @@
 // src/notifications/notification.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { OnEventDoc } from '../saga-event-module/decorators/on-event-doc.decorator';
-import { EventPayload } from '../saga-event-module/interfaces/event.interfaces';
-import { CausationEvent } from '../saga-event-module/decorators/causation-event.decorator';
+import { OnEventDoc } from '../../../saga-event-module/decorators/on-event-doc.decorator';
+import { EventPayload } from '../../../saga-event-module/interfaces/event.interfaces';
+import { CausationEvent } from '../../../saga-event-module/decorators/causation-event.decorator';
 
 @Injectable()
 export class NotificationService {

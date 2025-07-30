@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuditModule } from './audit/audit.module';
 import { SagaEventModule } from './saga-event-module/saga-event.module';
-import { UserModule } from './user/user.module';
-import { NotificationsModule } from './notifications/notification.module';
+import { UserModule } from './sample/simple/user/user.module';
+import { NotificationsModule } from './sample/simple/notifications/notification.module';
 
 @Module({
-  imports: [AuditModule, SagaEventModule, UserModule, NotificationsModule],
+  imports: [SagaEventModule, UserModule, NotificationsModule],
   controllers: [AppController],
   providers: [AppService],
 })
