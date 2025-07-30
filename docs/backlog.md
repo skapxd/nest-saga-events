@@ -237,14 +237,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **VERIFICACIÓN DE FASE 3:** Ejecutar `yarn build`.
-- [ ] **COMMIT DE FASE 3:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN DE FASE 3:** Ejecutar `yarn build`.
+- [x] **COMMIT DE FASE 3:** Crear un commit semántico en español.
 
 ---
 
 ## Fase 4: Auditoría y Ensamblaje
 
-- [ ] **Tarea 11: Implementar `EventLogService`.**
+- [x] **Tarea 11: Implementar `EventLogService`.**
   - **Descripción:** Crear el servicio que escucha todos los eventos y los persiste en `event-log.json`.
   - **Archivo a crear:** `src/saga-event-module/services/event-log.service.ts`
   - **Lógica Clave:**
@@ -264,7 +264,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **Tarea 12: Ensamblar el `SagaEventModule`.**
+- [x] **Tarea 12: Ensamblar el `SagaEventModule`.**
   - **Descripción:** Crear el módulo principal que une todos los componentes.
   - **Archivo a crear:** `src/saga-event-module/saga-event.module.ts`
   - **Lógica Clave:**
