@@ -16,6 +16,8 @@ import { DiscoveryModule } from '@golevelup/nestjs-discovery';
 import { EventGeneratorService } from './services/event-generator.service';
 import { EventDocumentationService } from './services/event-documentation.service';
 
+import { EventDocumentationController } from './controllers/event-documentation.controller';
+
 export class TypedEventEmitter {
   constructor(private readonly eventEmitter: EventEmitter2) {}
 
@@ -35,6 +37,7 @@ export class TypedEventEmitter {
       verboseMemoryLeak: true,
     }),
   ],
+  controllers: [EventDocumentationController],
   providers: [
     RequestContextService,
     EventMetadataHelper,

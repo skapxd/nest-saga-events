@@ -2,97 +2,137 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<h1 align="center">SagaEventModule: Un Framework para Sagas Coreografiadas en NestJS</h1>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <strong>Estado:</strong> Prueba de Concepto 🧪
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## Resumen
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Este repositorio es una prueba de concepto para un **módulo NestJS reutilizable (`SagaEventModule`)** diseñado para estandarizar y simplificar la implementación de sistemas asíncronos basados en eventos y el patrón **Saga (Coreografía)**.
 
-## Project setup
+El objetivo principal es **eliminar el código repetitivo (boilerplate)** y los errores comunes asociados a la gestión de eventos, la propagación de metadatos de trazabilidad y la lógica de `try/catch`. La solución se centra en un sistema de **decoradores "mágicos" pero declarativos** que automatizan estas tareas, permitiendo a los desarrolladores centrarse exclusivamente en la lógica de negocio.
+
+## El Problema: La Complejidad de los Sistemas Asíncronos
+
+Construir sistemas robustos y mantenibles basados en eventos es complejo. Los desarrolladores a menudo enfrentan los siguientes desafíos:
+- **Código Repetitivo:** Escribir bloques `try/catch` para manejar éxitos y fallos en cada método que inicia una operación asíncrona.
+- **Emisión Manual de Eventos:** Acordarse de emitir los eventos correctos (`operation.success`, `operation.failure`) en cada rama del código.
+- **Pérdida de Trazabilidad:** Propagar manualmente IDs de correlación y causalidad a través de múltiples servicios y eventos es tedioso y propenso a errores.
+- **Documentación Desactualizada:** Mantener diagramas y catálogos de eventos sincronizados con un código que evoluciona constantemente es una tarea casi imposible.
+
+## La Solución: Un Framework Declarativo y Automatizado
+
+El `SagaEventModule` aborda estos problemas proveyendo un conjunto de herramientas que automatizan las tareas repetitivas y garantizan la consistencia.
+
+### Principios de Diseño
+- **Experiencia de Desarrollador (DX) Superior:** Una API intuitiva y explícita que se siente nativa del ecosistema NestJS.
+- **Magia Controlada:** El módulo oculta la complejidad, pero lo hace de una manera predecible y declarativa.
+- **Trazabilidad por Defecto:** Cada acción es rastreable de extremo a extremo a través de un `correlationId` y un `causationId`.
+- **Arquitectura Viva:** La documentación y los tipos se generan automáticamente a partir del código fuente, asegurando que siempre estén actualizados.
+
+## Componentes Clave
+
+- **`@EmitsEvent(options)`**: El decorador principal. Envuelve un método y, de forma automática, emite eventos de éxito o fallo basándose en el resultado de la ejecución (si retorna un valor o lanza una excepción).
+- **`@OnEventDoc(eventName)`**: Un reemplazo para el `@OnEvent` de NestJS que, además de suscribir un método a un evento, registra la relación para la generación de documentación.
+- **`@CausationEvent()`**: Un decorador de parámetro que marca cuál es el evento entrante que causó la ejecución del método actual, permitiendo al sistema propagar la cadena de trazabilidad.
+- **`EventLogService`**: Un servicio que escucha todos los eventos (`*`) y los persiste en un log (`event-log.json`), proporcionando una auditoría completa sin esfuerzo adicional.
+- **Generadores Automáticos**:
+  - `EventGeneratorService`: Genera los tipos de todos los eventos de la aplicación en `src/saga-event-module/types/generated-events.ts`.
+  - `EventDocumentationService`: Genera un catálogo de eventos y un grafo de flujo visual en formato Mermaid.
+
+## Cómo Funciona: Un Vistazo Rápido
+
+#### 1. Emitir un Evento (El Inicio de la Saga)
+El desarrollador solo necesita decorar el método. No hay `try/catch`, no hay `eventEmitter.emit`.
+
+```typescript
+// src/user/user.service.ts
+@Injectable()
+export class UserService {
+  // ...
+  @EmitsEvent({
+    onInit: { name: 'user.creation.init' },
+    onSuccess: { name: 'user.created.success' },
+    onFailure: { name: 'user.created.failure' },
+  })
+  createUser(createUserDto: CreateUserDto) {
+    this.logger.log('Attempting to create user:', createUserDto);
+
+    if (Math.random() < 0.5) {
+      throw new Error('Random failure during user creation');
+    }
+
+    const user = { id: '12345', ...createUserDto };
+    return user; // Este valor será el payload del evento de éxito.
+  }
+}
+```
+
+#### 2. Escuchar un Evento (La Continuación de la Saga)
+Otro servicio reacciona al evento emitido. El decorador `@CausationEvent` permite obtener la metadata del evento anterior para mantener la trazabilidad.
+
+```typescript
+// src/notifications/notification.service.ts
+@Injectable()
+export class NotificationService {
+  // ...
+  @OnEventDoc('user.created.success')
+  handleUserCreatedSuccess(
+    @CausationEvent()
+    payload: EventPayload<{ id: string; name: string; email: string }>,
+  ) {
+    this.logger.log(
+      `Sending welcome email to ${payload.data.name}`,
+    );
+    this.logger.log('Correlation ID:', payload.metadata.correlationId);
+  }
+}
+```
+
+## Artefactos Auto-Generados
+
+Al iniciar la aplicación, el módulo genera automáticamente:
+
+1.  **Catálogo de Eventos (`docs/generated/EVENT_CATALOG.md`)**: Un archivo Markdown que documenta cada evento, quién lo emite y quién lo escucha.
+2.  **Grafo de Flujo de Eventos (`docs/generated/EVENT_FLOW.md`)**: Un diagrama en formato Mermaid que visualiza la coreografía completa de la saga.
+3.  **Endpoint de Visualización**: El diagrama de flujo también está disponible en `http://localhost:3000/event-docs/flow` para ser consumido por un frontend.
+
+### Ejemplo de Grafo de Flujo
+
+El siguiente diagrama es generado automáticamente y muestra las relaciones entre los servicios `UserService` y `NotificationService`:
+
+```mermaid
+graph TD;
+
+    N0_UserService_createUser["UserService.createUser"]
+    N0_UserService_createUser["UserService.createUser"]
+    N0_UserService_createUser["UserService.createUser"]
+    N1_NotificationService_handleUserCreatedSuccess["NotificationService.handleUserCreatedSuccess"]
+    N2_NotificationService_handleUserCreatedFailure["NotificationService.handleUserCreatedFailure"]
+    N3_user_creation_init("user.creation.init")
+    N4_user_created_success("user.created.success")
+    N5_user_created_failure("user.created.failure")
+
+    N0_UserService_createUser -- Emits --> N3_user_creation_init
+    N0_UserService_createUser -- Emits --> N4_user_created_success
+    N0_UserService_createUser -- Emits --> N5_user_created_failure
+    N4_user_created_success -- Triggers --> N1_NotificationService_handleUserCreatedSuccess
+    N5_user_created_failure -- Triggers --> N2_NotificationService_handleUserCreatedFailure
+```
+
+## Instalación y Uso
 
 ```bash
+# 1. Instalar dependencias
 $ yarn install
+
+# 2. Iniciar en modo de desarrollo
+$ yarn start:dev
 ```
+Al iniciar, los servicios de generación se ejecutarán y crearán los tipos y la documentación en los directorios `src/saga-event-module/types` y `docs/generated`.
 
-## Compile and run the project
+## Licencia
 
-```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Este proyecto está licenciado bajo la Licencia MIT.
