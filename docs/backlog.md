@@ -175,14 +175,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     }
     ```
 
-- [ ] **VERIFICACIÓN DE FASE 2:** Ejecutar `yarn build`.
-- [ ] **COMMIT DE FASE 2:** Crear un commit semántico en español.
+- [x] **VERIFICACIÓN DE FASE 2:** Ejecutar `yarn build`.
+- [x] **COMMIT DE FASE 2:** Crear un commit semántico en español.
 
 ---
 
 ## Fase 3: El Sistema de Decoradores
 
-- [ ] **Tarea 8: Implementar Decoradores de Parámetros.**
+- [x] **Tarea 8: Implementar Decoradores de Parámetros.**
   - **Descripción:** Crear los decoradores `@CausationEvent` y `@EventMetadata` que solo adjuntan metadatos de la posición del parámetro.
   - **Archivos a crear:** `causation-event.decorator.ts`, `event-metadata.decorator.ts` en `decorators/`.
   - **Lógica Clave (`CausationEvent`):**
@@ -196,7 +196,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     };
     ```
 
-- [ ] **Tarea 9: Implementar `@OnEventDoc`.**
+- [x] **Tarea 9: Implementar `@OnEventDoc`.**
   - **Descripción:** Crear el decorador que envuelve a `@OnEvent` y registra al listener.
   - **Archivo a crear:** `src/saga-event-module/decorators/on-event-doc.decorator.ts`
   - **Lógica Clave:**
@@ -213,7 +213,7 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
     };
     ```
 
-- [ ] **Tarea 10: Implementar `@EmitsEvent` (el decorador "mágico").**
+- [x] **Tarea 10: Implementar `@EmitsEvent` (el decorador "mágico").**
   - **Descripción:** Crear el decorador principal que automatiza el `try/catch` y la emisión de eventos.
   - **Archivo a crear:** `src/saga-event-module/decorators/emits-event.decorator.ts`
   - **Lógica Clave (Pseudo-código):**
