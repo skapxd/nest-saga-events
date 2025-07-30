@@ -1,59 +1,175 @@
-import { Command, CommandRunner, InquirerService } from 'nest-commander';
-import { SagaRegistryService } from '../services/saga-registry.service';
-import { writeFile } from 'fs/promises';
+import { Command, CommandRunner } from 'nest-commander';
+import { format } from 'prettier';
+import { DiscoveryService } from '@golevelup/nestjs-discovery';
+import { Logger } from '@nestjs/common';
+import {
+  EMITS_EVENT_METADATA_KEY,
+  EmitsEventMetadata,
+} from '../decorators/emits-event.decorator';
+import { glob } from 'glob';
+import { readFile, writeFile, mkdir } from 'fs/promises';
+import { join, parse } from 'path';
+import { existsSync } from 'fs';
 
-@Command({ name: 'generate-docs', description: 'Generate event documentation' })
+@Command({
+  name: 'generate-docs',
+  description: 'Generate event documentation and type definitions',
+})
 export class GenerateDocsCommand extends CommandRunner {
-  constructor(
-    private readonly inquirer: InquirerService,
-    private readonly sagaRegistryService: SagaRegistryService,
-  ) {
+  private readonly logger = new Logger(GenerateDocsCommand.name);
+
+  constructor(private readonly discoveryService: DiscoveryService) {
     super();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async run(_inputs: string[], _options: Record<string, any>): Promise<void> {
-    const emitters = this.sagaRegistryService.emitters;
-    const listeners = this.sagaRegistryService.listeners;
+  async run(): Promise<void> {
+    this.logger.log('Starting documentation generation...');
 
-    // Generate generated-events.ts
-    const eventNames = Array.from(
-      new Set([...emitters.keys(), ...listeners.keys()]),
+    // Discover Emitters
+    const providersWithEmitters =
+      await this.discoveryService.providersWithMetaAtKey<EmitsEventMetadata[]>(
+        EMITS_EVENT_METADATA_KEY,
+      );
+
+    this.logger.log(
+      `Discovered ${providersWithEmitters.length} providers with event emitters.`,
     );
-    const generatedEventsContent = `export const EventNames = ${JSON.stringify(
-      eventNames,
-      null,
-      2,
-    )};\n`;
-    await writeFile('generated-events.ts', generatedEventsContent);
 
-    // Generate EVENT_CATALOG.md
-    let eventCatalogContent = '# Event Catalog\n\n';
-    eventCatalogContent += '| Event Name | Emitter | Listener(s) |\n';
-    eventCatalogContent += '|------------|---------|-------------|\n';
-    for (const eventName of eventNames) {
-      const emitterInfo = emitters.get(eventName);
-      const listenerInfo = listeners.get(eventName) || [];
-      eventCatalogContent += `| ${eventName} | ${
-        emitterInfo ? `${emitterInfo.className}.${emitterInfo.methodName}` : ''
-      } | ${listenerInfo
-        .map((l) => `${l.className}.${l.methodName}`)
-        .join(', ')} |\n`;
-    }
-    await writeFile('EVENT_CATALOG.md', eventCatalogContent);
+    const events = new Map<
+      string,
+      { description?: string; payloadName?: string }
+    >();
+    const payloadImports = new Set<string>();
 
-    // Generate EVENT_FLOW.md (Mermaid.js)
-    let eventFlowContent = '```mermaid\ngraph LR;\n';
-    for (const [eventName, emitterInfo] of emitters.entries()) {
-      const listenerInfo = listeners.get(eventName) || [];
-      for (const listener of listenerInfo) {
-        eventFlowContent += `    ${emitterInfo.className}.${emitterInfo.methodName} -- Emits --> ${eventName};\n`;
-        eventFlowContent += `    ${eventName} -- Triggers --> ${listener.className}.${listener.methodName};\n`;
+    for (const provider of providersWithEmitters) {
+      const metadataList = provider.meta;
+
+      this.logger.log(
+        `Processing provider: ${provider.discoveredClass.name} with ${metadataList.length} event decorators.`,
+      );
+
+      for (const metadata of metadataList) {
+        if (metadata.onSuccess) {
+          await this.addEvent(events, payloadImports, metadata.onSuccess);
+        }
+        if (metadata.onFailure) {
+          await this.addEvent(events, payloadImports, metadata.onFailure);
+        }
       }
     }
-    eventFlowContent += '```\n';
-    await writeFile('EVENT_FLOW.md', eventFlowContent);
 
-    console.log('Documentation generated successfully.');
+    const generatedFileContent = this.generateFileContent(
+      events,
+      payloadImports,
+    );
+
+    const formattedContent = await format(generatedFileContent, {
+      parser: 'typescript',
+      singleQuote: true,
+    });
+
+    const outputPath = join(
+      process.cwd(),
+      'src',
+      'saga-event-module',
+      'types',
+      'generated-events.ts',
+    );
+
+    if (!existsSync(outputPath)) {
+      await mkdir(parse(outputPath).dir, { recursive: true });
+    }
+    await writeFile(outputPath, formattedContent);
+
+    this.logger.log(`✅ Event types generated successfully at: ${outputPath}`);
+  }
+
+  private async addEvent(
+    events: Map<string, { description?: string; payloadName?: string }>,
+    payloadImports: Set<string>,
+    eventDefinition: {
+      name: string;
+      description?: string;
+      payload?: new (...args: any[]) => any;
+    },
+  ) {
+    if (!eventDefinition.payload) {
+      this.logger.warn(
+        `⚠️ Payload class is missing for event: ${eventDefinition.name}. Skipping.`,
+      );
+    }
+
+    const eventName = eventDefinition.name;
+    const payloadName = eventDefinition.payload?.name;
+
+    if (events.has(eventName)) {
+      this.logger.warn(
+        `⚠️  Duplicate event name found: ${eventName}. Skipping.`,
+      );
+      return;
+    }
+
+    events.set(eventName, {
+      description: eventDefinition.description ?? '',
+      payloadName,
+    });
+
+    if (payloadName) {
+      const relativePath = await this.getRelativePath(payloadName);
+      if (relativePath) {
+        payloadImports.add(`import { ${payloadName} } from '${relativePath}';`);
+      } else {
+        this.logger.warn(
+          `⚠️  Could not find payload file for event: ${eventName}. Skipping import.`,
+        );
+      }
+    }
+  }
+
+  private async getRelativePath(payloadName: string): Promise<string | null> {
+    const files = await glob(`src/**/*.events.ts`);
+    for (const file of files) {
+      const content = await readFile(file, 'utf-8');
+      if (content.includes(`class ${payloadName}`)) {
+        const srcDir = join(process.cwd(), 'src');
+        const payloadPath = file
+          .replace(srcDir, '')
+          .replace(/\\/g, '/')
+          .replace('.ts', '');
+        return `#/${payloadPath}`;
+      }
+    }
+    return null;
+  }
+
+  private generateFileContent(
+    events: Map<string, { description?: string; payloadName?: string }>,
+    payloadImports: Set<string>,
+  ): string {
+    const eventDefinitions = Array.from(events.entries()).map(
+      ([eventName, { description, payloadName }]) => {
+        const eventConstantName = eventName.toUpperCase().replace(/\./g, '_');
+        return `
+        /**
+         * ${description}
+         */
+        '${eventConstantName}': {
+          name: '${eventName}',
+          description: '${description}',
+          payloadClass: ${payloadName},
+        },
+      `;
+      },
+    );
+
+    return `// This file is auto-generated by the 'generate-event-types' command.
+// Do not edit this file manually.
+
+${Array.from(payloadImports).join('\n')}
+
+export const AppEvents = {
+  ${eventDefinitions.join('\n')}
+} as const;
+`;
   }
 }

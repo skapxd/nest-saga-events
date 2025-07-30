@@ -1,11 +1,18 @@
 import { OnEvent } from '@nestjs/event-emitter';
 import { OnEventOptions } from '@nestjs/event-emitter/dist/interfaces';
-// import { SagaRegistryService } from '../services/saga-registry.service';
+import 'reflect-metadata';
+
+import { Logger, SetMetadata } from '@nestjs/common';
+import { AppEventName } from '../types';
+
+export const ON_EVENT_DOC_METADATA_KEY = Symbol('ON_EVENT_DOC_METADATA_KEY');
 
 export const OnEventDoc = (
-  eventName: string,
+  eventName: AppEventName,
   options?: OnEventOptions,
 ): MethodDecorator => {
+  const logger = new Logger(OnEventDoc.name);
+
   return (
     target: object,
     propertyKey: string | symbol,
@@ -13,11 +20,13 @@ export const OnEventDoc = (
   ) => {
     const className = target.constructor.name;
     const methodName = propertyKey.toString();
+    SetMetadata(ON_EVENT_DOC_METADATA_KEY, eventName)(
+      target,
+      propertyKey,
+      descriptor,
+    );
 
-    // This is a placeholder for the actual implementation
-    // We will need to find a way to inject SagaRegistryService here
-    // For now, we will just call the OnEvent decorator
-    console.log(
+    logger.log(
       `Registered listener for event ${eventName} on ${className}.${methodName}`,
     );
 

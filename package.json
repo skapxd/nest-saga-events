@@ -13,6 +13,8 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "cli:run": "npx ts-node --files --transpile-only -r tsconfig-paths/register src/main.cli.ts",
+    "gen-docs": "yarn cli:run generate-docs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

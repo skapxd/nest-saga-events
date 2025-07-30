@@ -3,13 +3,18 @@ import { CAUSATION_EVENT_PARAM_INDEX } from './causation-event.decorator';
 import { EventMetadataHelper } from '../services/event-metadata.helper';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from '../interfaces/event.interfaces';
+import { AppEventName } from '../types';
 
-export interface EmitsEventOptions {
-  onSuccess: { name: string };
-  onFailure: { name: string };
+export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
+
+export interface EmitsEventMetadata {
+  onSuccess: { name: AppEventName };
+  onFailure: { name: AppEventName };
+  className?: string;
+  methodName?: string;
 }
 
-export const EmitsEvent = (options: EmitsEventOptions): MethodDecorator => {
+export const EmitsEvent = (options: EmitsEventMetadata): MethodDecorator => {
   return (
     target: object,
     propertyKey: string | symbol,
@@ -17,6 +22,29 @@ export const EmitsEvent = (options: EmitsEventOptions): MethodDecorator => {
   ) => {
     const originalMethod = descriptor.value;
 
+    const className = target.constructor.name;
+    const methodName = String(propertyKey);
+
+    // Añadimos el nuevo metadato al array y lo guardamos de vuelta en el CONSTRUCTOR
+    const existingMetadataList =
+      (Reflect.getMetadata(
+        EMITS_EVENT_METADATA_KEY,
+        target.constructor,
+      ) as EmitsEventMetadata[]) || [];
+
+    const newMetadata: EmitsEventMetadata = {
+      ...options,
+      className,
+      methodName,
+    };
+
+    Reflect.defineMetadata(
+      EMITS_EVENT_METADATA_KEY,
+      [...existingMetadataList, newMetadata],
+      target.constructor,
+    );
+
+    // --- Existing logic continues below ---
     descriptor.value = async function (
       this: {
         eventEmitter: EventEmitter2;
