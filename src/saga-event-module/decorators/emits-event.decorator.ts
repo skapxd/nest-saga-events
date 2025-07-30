@@ -8,13 +8,24 @@ import { AppEventName } from '../types';
 export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
 
 export interface EmitsEventMetadata {
+  onInit?: { name: AppEventName };
   onSuccess: { name: AppEventName };
   onFailure: { name: AppEventName };
-  className?: string;
-  methodName?: string;
+  className: string;
+  methodName: string;
 }
 
-export const EmitsEvent = (options: EmitsEventMetadata): MethodDecorator => {
+interface EventDefinition {
+  name: AppEventName;
+  description?: string;
+  payload?: new (...args: any[]) => any;
+}
+
+export const EmitsEvent = (options: {
+  onInit?: EventDefinition;
+  onSuccess: EventDefinition;
+  onFailure: EventDefinition;
+}): MethodDecorator => {
   return (
     target: object,
     propertyKey: string | symbol,
@@ -74,6 +85,12 @@ export const EmitsEvent = (options: EmitsEventMetadata): MethodDecorator => {
         metadata = metadataHelper.createFromPrevious(causationPayload.metadata);
       } else {
         metadata = metadataHelper.createFromContext();
+      }
+
+      // Emit the onInit event if defined
+      if (options.onInit) {
+        const initPayload: EventPayload<any[]> = { metadata, data: args };
+        eventEmitter.emit(options.onInit.name, initPayload);
       }
 
       try {

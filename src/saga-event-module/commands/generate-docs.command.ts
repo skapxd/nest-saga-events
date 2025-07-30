@@ -49,6 +49,9 @@ export class GenerateDocsCommand extends CommandRunner {
       );
 
       for (const metadata of metadataList) {
+        if (metadata.onInit) {
+          await this.addEvent(events, payloadImports, metadata.onInit);
+        }
         if (metadata.onSuccess) {
           await this.addEvent(events, payloadImports, metadata.onSuccess);
         }
@@ -76,12 +79,27 @@ export class GenerateDocsCommand extends CommandRunner {
       'generated-events.ts',
     );
 
-    if (!existsSync(outputPath)) {
-      await mkdir(parse(outputPath).dir, { recursive: true });
+    // --- Optimization: Check for changes before writing ---
+    if (existsSync(outputPath)) {
+      const existingContent = await readFile(outputPath, 'utf-8');
+      if (existingContent === formattedContent) {
+        this.logger.log(
+          'No changes detected in event definitions. Skipping file write.',
+        );
+        return;
+      }
+    }
+
+    // --- Write file if it's new or has changed ---
+    const outputDir = parse(outputPath).dir;
+    if (!existsSync(outputDir)) {
+      await mkdir(outputDir, { recursive: true });
     }
     await writeFile(outputPath, formattedContent);
 
-    this.logger.log(`✅ Event types generated successfully at: ${outputPath}`);
+    this.logger.log(
+      `✅ Event types generated and updated successfully at: ${outputPath}`,
+    );
   }
 
   private async addEvent(
@@ -93,19 +111,10 @@ export class GenerateDocsCommand extends CommandRunner {
       payload?: new (...args: any[]) => any;
     },
   ) {
-    if (!eventDefinition.payload) {
-      this.logger.warn(
-        `⚠️ Payload class is missing for event: ${eventDefinition.name}. Skipping.`,
-      );
-    }
-
     const eventName = eventDefinition.name;
     const payloadName = eventDefinition.payload?.name;
 
     if (events.has(eventName)) {
-      this.logger.warn(
-        `⚠️  Duplicate event name found: ${eventName}. Skipping.`,
-      );
       return;
     }
 

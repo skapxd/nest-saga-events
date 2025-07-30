@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   await CommandFactory.run(AppModule, {
-    logger: ['warn', 'error'],
+    logger: ['log', 'warn', 'error'],
   });
 }
 

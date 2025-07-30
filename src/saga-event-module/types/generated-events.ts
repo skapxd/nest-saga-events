@@ -5,6 +5,15 @@ export const AppEvents = {
   /**
    *
    */
+  USER_CREATION_INIT: {
+    name: 'user.creation.init',
+    description: '',
+    payloadClass: undefined,
+  },
+
+  /**
+   *
+   */
   USER_CREATED_SUCCESS: {
     name: 'user.created.success',
     description: '',

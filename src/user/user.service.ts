@@ -15,6 +15,7 @@ export class UserService {
   ) {}
 
   @EmitsEvent({
+    onInit: { name: 'user.creation.init' },
     onSuccess: { name: 'user.created.success' },
     onFailure: { name: 'user.created.failure' },
   })
