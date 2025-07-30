@@ -8,9 +8,9 @@ import { AppEventName } from '../types';
 export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
 
 export interface EmitsEventMetadata {
-  onInit?: { name: AppEventName };
-  onSuccess: { name: AppEventName };
-  onFailure: { name: AppEventName };
+  onInit?: EventDefinition;
+  onSuccess: EventDefinition;
+  onFailure: EventDefinition;
   className: string;
   methodName: string;
 }

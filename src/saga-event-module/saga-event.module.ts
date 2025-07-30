@@ -4,7 +4,6 @@ import {
   NestModule,
   MiddlewareConsumer,
   OnModuleInit,
-  Inject,
 } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RequestContextService } from './services/request-context.service';
@@ -15,6 +14,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from './interfaces/event.interfaces';
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
 import { EventGeneratorService } from './services/event-generator.service';
+import { EventDocumentationService } from './services/event-documentation.service';
 
 export class TypedEventEmitter {
   constructor(private readonly eventEmitter: EventEmitter2) {}
@@ -46,17 +46,20 @@ export class TypedEventEmitter {
       inject: [EventEmitter2],
     },
     EventGeneratorService,
+    EventDocumentationService,
   ],
   exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
 })
 export class SagaEventModule implements NestModule, OnModuleInit {
   constructor(
-    @Inject(EventGeneratorService)
     private readonly eventGeneratorService: EventGeneratorService,
+    private readonly eventDocumentationService: EventDocumentationService,
   ) {}
 
   async onModuleInit() {
+    // The order is important. First generate types, then docs.
     await this.eventGeneratorService.generate();
+    await this.eventDocumentationService.generate();
   }
 
   configure(consumer: MiddlewareConsumer) {
