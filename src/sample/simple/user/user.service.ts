@@ -11,7 +11,7 @@ export class UserService {
     onSuccess: { name: 'user.created.success' },
     onFailure: { name: 'user.created.failure' },
   })
-  createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto) {
     this.logger.log('Attempting to create user:', createUserDto);
 
     // Simulate a process that can fail

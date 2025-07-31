@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmitsEvent } from '#/saga-event-module/decorators/emits-event.decorator';
+import { EmitsEvent } from '#/src/saga-event-module/decorators/emits-event.decorator';
 import { PlaceOrderDto } from './dto/place-order.dto';
 
 @Injectable()

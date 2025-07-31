@@ -9,9 +9,12 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
+    "resolveJsonModule": true,
     "baseUrl": "./",
     "paths": {
-      "#/*": ["src/*"]
+      "#/*": [
+        "*"
+      ]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -19,7 +22,10 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "vitest/globals"
+    ]
   },
   "ts-node": {
     "require": [

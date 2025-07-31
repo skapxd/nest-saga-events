@@ -15,11 +15,9 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "cli:run": "npx ts-node --files --transpile-only -r tsconfig-paths/register src/main.cli.ts",
     "gen-docs": "yarn cli:run generate-docs",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test": "vitest",
+    "test:ci": "vitest --watch false",
+    "test:ui": "vite preview --outDir test-reporter"
   },
   "dependencies": {
     "@golevelup/nestjs-discovery": "5.0.0",
@@ -28,11 +26,14 @@
     "@nestjs/event-emitter": "3.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "11.2.0",
+    "dotenv": "17.2.1",
     "glob": "11.0.3",
     "lowdb": "7.0.1",
     "nest-commander": "3.18.0",
     "reflect-metadata": "0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "unplugin-swc": "1.5.5",
+    "vitest": "3.2.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -47,6 +48,8 @@
     "@types/jest": "^29.5.14",
     "@types/node": "24.1.0",
     "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/ui": "3.2.4",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

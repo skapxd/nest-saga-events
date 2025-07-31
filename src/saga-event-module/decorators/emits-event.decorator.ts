@@ -102,8 +102,8 @@ export const EmitsEvent = (options: {
       } catch (error) {
         const failurePayload: EventPayload<any> = { metadata, data: error };
         eventEmitter.emit(options.onFailure.name, failurePayload);
-        // Do not rethrow the error, as it's been handled by emitting an event.
-        // This prevents unhandled promise rejections in fire-and-forget scenarios.
+        // Rethrow the error to allow for proper promise rejection handling.
+        throw error;
       }
     };
 

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventDocumentationService } from '../services/event-documentation.service';
-import { JsonDatabaseService } from '#/database/json/json-database.service';
+import { JsonDatabaseService } from '#/src/database/json/json-database.service';
 import { EventPayload } from '../interfaces/event.interfaces';
 
 import { EmitterInfo } from '../interfaces/event-documentation.interfaces';

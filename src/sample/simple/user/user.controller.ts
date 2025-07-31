@@ -9,9 +9,8 @@ export class UserController {
 
   @Post()
   @HttpCode(202) // Accepted
-  createUser(@Body() createUserDto: CreateUserDto) {
-    // We don't await this, the request finishes and the saga continues in the background
-    this.userService.createUser(createUserDto);
+  async createUser(@Body() createUserDto: CreateUserDto) {
+    await this.userService.createUser(createUserDto);
     return { message: 'User creation process started.' };
   }
 }

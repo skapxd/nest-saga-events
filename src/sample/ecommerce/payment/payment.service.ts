@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmitsEvent } from '#/saga-event-module/decorators/emits-event.decorator';
-import { OnEventDoc } from '#/saga-event-module/decorators/on-event-doc.decorator';
-import { CausationEvent } from '#/saga-event-module/decorators/causation-event.decorator';
-import { EventPayload } from '#/saga-event-module/interfaces/event.interfaces';
+import { EmitsEvent } from '#/src/saga-event-module/decorators/emits-event.decorator';
+import { OnEventDoc } from '#/src/saga-event-module/decorators/on-event-doc.decorator';
+import { CausationEvent } from '#/src/saga-event-module/decorators/causation-event.decorator';
+import { EventPayload } from '#/src/saga-event-module/interfaces/event.interfaces';
 import { PlaceOrderDto } from '../order/dto/place-order.dto';
 
 @Injectable()

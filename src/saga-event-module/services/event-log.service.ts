@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from '../interfaces/event.interfaces';
-import { JsonDatabaseService } from '#/database/json/json-database.service';
+import { JsonDatabaseService } from '#/src/database/json/json-database.service';
 
 @Injectable()
 export class EventLogService implements OnModuleInit {
