@@ -4,6 +4,7 @@ import {
   NestModule,
   MiddlewareConsumer,
   OnModuleInit,
+  RequestMethod,
 } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RequestContextService } from './services/request-context.service';
@@ -76,6 +77,9 @@ export class SagaEventModule implements NestModule, OnModuleInit {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestContextMiddleware)
+      .exclude({ path: 'docs/*path', method: RequestMethod.ALL })
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
   }
 }
