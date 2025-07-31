@@ -1,18 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EventMetadataHelper } from '#/saga-event-module/services/event-metadata.helper';
 import { EmitsEvent } from '#/saga-event-module/decorators/emits-event.decorator';
 import { PlaceOrderDto } from './dto/place-order.dto';
 
 @Injectable()
 export class OrderService {
   private readonly logger = new Logger(OrderService.name);
-
-  constructor(
-    // These are required for the @EmitsEvent decorator to work
-    public readonly eventEmitter: EventEmitter2,
-    public readonly eventMetadataHelper: EventMetadataHelper,
-  ) {}
 
   @EmitsEvent({
     onInit: {

@@ -54,10 +54,20 @@ export class TypedEventEmitter {
   exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
 })
 export class SagaEventModule implements NestModule, OnModuleInit {
+  // Propiedades estáticas para acceder desde cualquier lugar
+  public static eventEmitter: EventEmitter2;
+  public static eventMetadataHelper: EventMetadataHelper;
+
   constructor(
     private readonly eventGeneratorService: EventGeneratorService,
     private readonly eventDocumentationService: EventDocumentationService,
-  ) {}
+    private readonly eventEmitterInstance: EventEmitter2,
+    private readonly eventMetadataHelperInstance: EventMetadataHelper,
+  ) {
+    // Asignar las instancias a las propiedades estáticas
+    SagaEventModule.eventEmitter = this.eventEmitterInstance;
+    SagaEventModule.eventMetadataHelper = this.eventMetadataHelperInstance;
+  }
 
   async onModuleInit() {
     // The order is important. First generate types, then docs.

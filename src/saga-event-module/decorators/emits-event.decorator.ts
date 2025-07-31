@@ -4,6 +4,7 @@ import { EventMetadataHelper } from '../services/event-metadata.helper';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from '../interfaces/event.interfaces';
 import { AppEventName } from '../types';
+import { SagaEventModule } from '../saga-event.module';
 
 export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
 
@@ -64,8 +65,8 @@ export const EmitsEvent = (options: {
       ...args: any[]
     ) {
       // These services would ideally be injected or accessed via a static context
-      const eventEmitter = this.eventEmitter;
-      const metadataHelper = this.eventMetadataHelper;
+      const eventEmitter = SagaEventModule.eventEmitter;
+      const metadataHelper = SagaEventModule.eventMetadataHelper;
 
       if (!eventEmitter || !metadataHelper) {
         throw new Error(
