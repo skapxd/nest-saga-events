@@ -18,6 +18,7 @@ import { EventGeneratorService } from './services/event-generator.service';
 import { EventDocumentationService } from './services/event-documentation.service';
 
 import { EventDocumentationController } from './controllers/event-documentation.controller';
+import { EventServiceLocator } from './services/event-service-locator';
 
 export class TypedEventEmitter {
   constructor(private readonly eventEmitter: EventEmitter2) {}
@@ -62,12 +63,13 @@ export class SagaEventModule implements NestModule, OnModuleInit {
   constructor(
     private readonly eventGeneratorService: EventGeneratorService,
     private readonly eventDocumentationService: EventDocumentationService,
-    private readonly eventEmitterInstance: EventEmitter2,
-    private readonly eventMetadataHelperInstance: EventMetadataHelper,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly eventMetadataHelper: EventMetadataHelper,
   ) {
-    // Asignar las instancias a las propiedades estáticas
-    SagaEventModule.eventEmitter = this.eventEmitterInstance;
-    SagaEventModule.eventMetadataHelper = this.eventMetadataHelperInstance;
+    EventServiceLocator.initialize({
+      eventEmitter: this.eventEmitter,
+      metadataHelper: this.eventMetadataHelper,
+    });
   }
 
   async onModuleInit() {

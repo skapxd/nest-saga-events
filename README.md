@@ -169,6 +169,81 @@ $ yarn start:dev
 
 Al iniciar, los servicios de generación se ejecutarán y crearán los tipos y la documentación en los directorios `src/saga-event-module/types` y `docs/generated`.
 
+## Pruebas Unitarias con SagaEventTestingModule
+
+Cuando se escriben pruebas unitarias para servicios que utilizan decoradores como `@EmitsEvent`, la configuración de prueba estándar de NestJS no es suficiente. La lógica de emisión de eventos y propagación de metadatos depende de que varios servicios de `SagaEventModule` estén disponibles en el contenedor de inyección de dependencias.
+
+Para simplificar este proceso, el módulo proporciona `SagaEventTestingModule`, un módulo de prueba dedicado que viene preconfigurado con todos los proveedores y simulacros necesarios para servicios con efectos secundarios (como acceso a bases de datos o al sistema de archivos).
+
+### Cómo Usarlo
+
+Para probar un servicio, importa `SagaEventTestingModule` en tu archivo de prueba e inclúyelo en el array `imports` de tu `TestingModule`. Solo necesitas proporcionar el servicio que estás probando.
+
+A continuación se muestra un ejemplo de cómo probar `UserService`:
+
+```typescript
+// src/sample/simple/user/user.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from './user.service';
+import { SagaEventTestingModule } from '#/src/saga-event-module/testing/saga-event-testing.module';
+import { CreateUserDto } from './user.dto';
+import { vi } from 'vitest';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      // Importa el módulo de prueba
+      imports: [SagaEventTestingModule],
+      // Proporciona el servicio que quieres probar
+      providers: [UserService],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('createUser', () => {
+    it('debería crear un usuario exitosamente y emitir un evento de éxito', async () => {
+      // Simula cualquier dependencia externa si es necesario
+      vi.spyOn(Math, 'random').mockReturnValue(0.6); // Asegura que no falle
+
+      const createUserDto: CreateUserDto = {
+        name: 'Test User',
+        email: 'test@example.com',
+      };
+
+      // El decorador @EmitsEvent se encargará de la emisión del evento automáticamente
+      const result = await service.createUser(createUserDto);
+
+      expect(result).toEqual({ id: '12345', ...createUserDto });
+      // Puedes añadir más aserciones aquí para verificar si se emitieron eventos,
+      // por ejemplo, espiando en EventEmitter2.
+    });
+
+    it('debería manejar un error y emitir un evento de fallo', async () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.4); // Asegura que falle
+
+      const createUserDto: CreateUserDto = {
+        name: 'Test User',
+        email: 'test@example.com',
+      };
+
+      // El decorador capturará el error y emitirá el evento de fallo
+      const result = await service.createUser(createUserDto);
+
+      expect(result).toBeUndefined();
+    });
+  });
+});
+```
+
+Esta configuración asegura que cuando se llama a `userService.createUser`, el decorador `@EmitsEvent` tiene acceso a todos los servicios que necesita para funcionar correctamente dentro de un entorno de prueba.
+
 ## Licencia
 
 Este proyecto está licenciado bajo la Licencia MIT.

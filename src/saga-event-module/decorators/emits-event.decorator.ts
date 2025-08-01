@@ -1,10 +1,9 @@
 import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
 import { CAUSATION_EVENT_PARAM_INDEX } from './causation-event.decorator';
-import { EventMetadataHelper } from '../services/event-metadata.helper';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventPayload } from '../interfaces/event.interfaces';
 import { AppEventName } from '../types';
-import { SagaEventModule } from '../saga-event.module';
+import { EventServiceLocator } from '../services/event-service-locator';
 
 export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
 
@@ -27,12 +26,14 @@ export const EmitsEvent = (options: {
   onSuccess: EventDefinition;
   onFailure: EventDefinition;
 }): MethodDecorator => {
+  const logger = new Logger(EmitsEvent.name);
+
   return (
     target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ) => {
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as (...args: any[]) => Promise<any>;
 
     const className = target.constructor.name;
     const methodName = String(propertyKey);
@@ -57,22 +58,11 @@ export const EmitsEvent = (options: {
     );
 
     // --- Existing logic continues below ---
-    descriptor.value = async function (
-      this: {
-        eventEmitter: EventEmitter2;
-        eventMetadataHelper: EventMetadataHelper;
-      },
-      ...args: any[]
-    ) {
-      // These services would ideally be injected or accessed via a static context
-      const eventEmitter = SagaEventModule.eventEmitter;
-      const metadataHelper = SagaEventModule.eventMetadataHelper;
-
-      if (!eventEmitter || !metadataHelper) {
-        throw new Error(
-          'EventEmitter2 and EventMetadataHelper must be available on the class instance',
-        );
-      }
+    descriptor.value = async function <
+      T extends Awaited<ReturnType<typeof originalMethod>>,
+    >(this: any, ...args: any[]): Promise<T | void> {
+      const { eventEmitter, metadataHelper } =
+        EventServiceLocator.getInstance();
 
       const causationIndex = Reflect.getMetadata(
         CAUSATION_EVENT_PARAM_INDEX,
@@ -81,7 +71,7 @@ export const EmitsEvent = (options: {
       );
       let metadata;
 
-      if (causationIndex !== undefined) {
+      if (causationIndex !== undefined && args[causationIndex]) {
         const causationPayload = args[causationIndex] as EventPayload<any>;
         metadata = metadataHelper.createFromPrevious(causationPayload.metadata);
       } else {
@@ -92,18 +82,32 @@ export const EmitsEvent = (options: {
       if (options.onInit) {
         const initPayload: EventPayload<any[]> = { metadata, data: args };
         eventEmitter.emit(options.onInit.name, initPayload);
+        logger.debug(
+          `EVENT: ${options.onInit.name} | EventID: ${initPayload.metadata.eventId}`,
+        );
       }
 
       try {
-        const result = await originalMethod.apply(this, args);
-        const successPayload: EventPayload<any> = { metadata, data: result };
+        const result: T = await originalMethod.apply(this, args);
+        const successPayload: EventPayload<T> = { metadata, data: result };
         eventEmitter.emit(options.onSuccess.name, successPayload);
+
+        logger.debug(
+          `EVENT: ${options.onSuccess.name} | EventID: ${successPayload.metadata.eventId}`,
+        );
+
         return result;
       } catch (error) {
         const failurePayload: EventPayload<any> = { metadata, data: error };
+
+        logger.error(
+          `EVENT: ${options.onFailure.name} | EventID: ${failurePayload.metadata.eventId}`,
+        );
+        logger.error(error);
+
         eventEmitter.emit(options.onFailure.name, failurePayload);
-        // Rethrow the error to allow for proper promise rejection handling.
-        throw error;
+        // Explicitly return nothing to satisfy the void part of the union type
+        return;
       }
     };
 
