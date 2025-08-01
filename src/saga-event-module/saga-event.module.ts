@@ -19,6 +19,7 @@ import { EventDocumentationService } from './services/event-documentation.servic
 
 import { EventDocumentationController } from './controllers/event-documentation.controller';
 import { EventServiceLocator } from './services/event-service-locator';
+import { MermaidParserModule } from '#/src/mermaid-parser/mermaid-parser.module';
 
 export class TypedEventEmitter {
   constructor(private readonly eventEmitter: EventEmitter2) {}
@@ -38,6 +39,7 @@ export class TypedEventEmitter {
       delimiter: '.',
       verboseMemoryLeak: true,
     }),
+    MermaidParserModule,
   ],
   controllers: [EventDocumentationController],
   providers: [

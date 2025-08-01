@@ -64,7 +64,7 @@ export const EmitsEvent = (options: {
       const { eventEmitter, metadataHelper } =
         EventServiceLocator.getInstance();
 
-      const causationIndex = Reflect.getMetadata(
+      const causationIndex: number | undefined = Reflect.getMetadata(
         CAUSATION_EVENT_PARAM_INDEX,
         target,
         propertyKey,
@@ -88,7 +88,7 @@ export const EmitsEvent = (options: {
       }
 
       try {
-        const result: T = await originalMethod.apply(this, args);
+        const result = (await originalMethod.apply(this, args)) as T;
         const successPayload: EventPayload<T> = { metadata, data: result };
         eventEmitter.emit(options.onSuccess.name, successPayload);
 

@@ -12,14 +12,14 @@ import {
   ON_EVENT_DOC_METADATA_KEY,
   OnEventDocMetadata,
 } from '../decorators/on-event-doc.decorator';
-import { writeFile, mkdir, readFile } from 'fs/promises';
+import {
+  LOGICAL_AND_GATE_METADATA_KEY,
+  LogicalAndGateMetadata,
+} from '../decorators/logical-and-gate.decorator';
+import { writeFile, mkdir, readFile, rm } from 'fs/promises';
 import { join, parse } from 'path';
 import { existsSync } from 'fs';
-
-import {
-  DEPENDS_ON_EVENT_METADATA_KEY,
-  DependsOnEventMetadata,
-} from '../decorators/depends-on-event.decorator';
+import { MermaidParserService } from '#/src/mermaid-parser/mermaid-parser.service';
 
 @Injectable()
 export class EventDocumentationService {
@@ -27,7 +27,10 @@ export class EventDocumentationService {
   private flowGraphContent = 'graph TD;\n\n    Empty["No events found"];';
   private sagaStarters: EmitterInfo[] = [];
 
-  constructor(private readonly discoveryService: DiscoveryService) {}
+  constructor(
+    private readonly discoveryService: DiscoveryService,
+    private readonly mermaidParser: MermaidParserService,
+  ) {}
 
   public getFlowGraph(): string {
     return this.flowGraphContent;
@@ -38,186 +41,50 @@ export class EventDocumentationService {
   }
 
   async generate(): Promise<void> {
-    this.logger.log('Starting event documentation generation...');
+    this.logger.log('Starting unified documentation generation...');
 
+    // 1. Discover all elements
     const emitters = await this.discoverEmitters();
     const listeners = await this.discoverListeners();
-
+    const gates = await this.discoverLogicalAndGates();
     this.discoverSagaStarters(emitters, listeners);
-    await this.generateCatalog(emitters, listeners);
-    await this.generateFlowGraph(emitters, listeners);
 
-    this.logger.log('✅ Event documentation generated successfully.');
-  }
-
-  private discoverSagaStarters(
-    emitters: EmitterInfo[],
-    listeners: ListenerInfo[],
-  ) {
-    const listenerMethodIds = new Set(
-      listeners.map((l) => `${l.className}.${l.methodName}`),
-    );
-
-    const starterMethods = new Map<string, EmitterInfo>();
-
-    for (const emitter of emitters) {
-      const emitterMethodId = `${emitter.className}.${emitter.methodName}`;
-      // A method is a starter if it emits events but is NOT triggered by one.
-      if (!listenerMethodIds.has(emitterMethodId)) {
-        // We only care about the 'onInit' event for the starter list
-        if (emitter.eventName.endsWith('.init')) {
-          starterMethods.set(emitterMethodId, emitter);
-        }
-      }
-    }
-
-    this.sagaStarters = Array.from(starterMethods.values());
-    this.logger.log(`Discovered ${this.sagaStarters.length} saga starter(s).`);
-  }
-
-  private async discoverEmitters(): Promise<EmitterInfo[]> {
-    const providers = await this.discoveryService.providersWithMetaAtKey<
-      EmitsEventMetadata[]
-    >(EMITS_EVENT_METADATA_KEY);
-    const emitters: EmitterInfo[] = [];
-
-    for (const provider of providers) {
-      const metadataList = provider.meta;
-      for (const metadata of metadataList) {
-        if (metadata.onInit) {
-          emitters.push({
-            eventName: metadata.onInit.name,
-            className: metadata.className,
-            methodName: metadata.methodName,
-            description:
-              metadata.onInit.description || 'Fired when the operation starts.',
-          });
-        }
-        if (metadata.onSuccess) {
-          emitters.push({
-            eventName: metadata.onSuccess.name,
-            className: metadata.className,
-            methodName: metadata.methodName,
-            description:
-              metadata.onSuccess.description ||
-              'Fired on successful execution.',
-          });
-        }
-        if (metadata.onFailure) {
-          emitters.push({
-            eventName: metadata.onFailure.name,
-            className: metadata.className,
-            methodName: metadata.methodName,
-            description:
-              metadata.onFailure.description || 'Fired on failed execution.',
-          });
-        }
-      }
-    }
-    return emitters;
-  }
-
-  private async discoverListeners(): Promise<ListenerInfo[]> {
-    const listeners: ListenerInfo[] = [];
-
-    // Discover actual event listeners from @OnEventDoc
-    const onEventProviders = await this.discoveryService.providersWithMetaAtKey<
-      OnEventDocMetadata[]
-    >(ON_EVENT_DOC_METADATA_KEY);
-
-    for (const provider of onEventProviders) {
-      const metadataList = provider.meta;
-      for (const metadata of metadataList) {
-        listeners.push({
-          eventName: metadata.eventName,
-          className: metadata.className,
-          methodName: metadata.methodName,
-        });
-      }
-    }
-
-    // Discover logical dependencies from @DependsOnEvent
-    const dependsOnProviders =
-      await this.discoveryService.providersWithMetaAtKey<
-        DependsOnEventMetadata[]
-      >(DEPENDS_ON_EVENT_METADATA_KEY);
-
-    for (const provider of dependsOnProviders) {
-      const metadataList = provider.meta;
-      for (const metadata of metadataList) {
-        listeners.push({
-          eventName: metadata.eventName,
-          className: metadata.className,
-          methodName: metadata.methodName,
-        });
-      }
-    }
-
-    return listeners;
-  }
-
-  private async generateCatalog(
-    emitters: EmitterInfo[],
-    listeners: ListenerInfo[],
-  ) {
-    let content = '# Event Catalog\n\n';
-    content +=
-      'This document is auto-generated by the `EventDocumentationService`. Do not edit manually.\n\n';
-    content += '| Event Name | Description | Emitted By | Listened By |\n';
-    content += '|------------|-------------|------------|-------------|\n';
-
+    // 2. Build the graph and catalog strings
     const allEventNames = new Set([
       ...emitters.map((e) => e.eventName),
       ...listeners.map((l) => l.eventName),
     ]);
+    const flowGraph = this.buildFlowGraph(
+      emitters,
+      listeners,
+      gates,
+      allEventNames,
+    );
+    const catalog = this.buildCatalog(emitters, listeners, allEventNames);
 
-    for (const eventName of allEventNames) {
-      const eventEmitters = emitters.filter((e) => e.eventName === eventName);
-      const eventListeners = listeners.filter((l) => l.eventName === eventName);
+    // 3. Combine into a single file
+    const finalContent = `# Saga Event Documentation\n\n## Event Flow\n\n\`\`\`mermaid\n${flowGraph}\`\`\`\n\n## Event Catalog\n\n${catalog}`;
 
-      const description = eventEmitters[0]?.description || 'N/A';
-      const emitterStr =
-        eventEmitters
-          .map((e) => `\`${e.className}.${e.methodName}\``)
-          .join('<br/>') || 'N/A';
-      const listenerStr =
-        eventListeners
-          .map((l) => `\`${l.className}.${l.methodName}\``)
-          .join('<br/>') || 'N/A';
-
-      content += `| \`${eventName}\` | ${description} | ${emitterStr} | ${listenerStr} |\n`;
-    }
-
+    // 4. Write the new file and clean up old ones
     const outputPath = join(
       process.cwd(),
       'docs',
       'generated',
-      'EVENT_CATALOG.md',
+      'SAGA_DOCUMENTATION.md',
     );
-    await this.writeFileIfChanged(outputPath, content);
+    await this.writeFileIfChanged(outputPath, finalContent);
+    await this.cleanupOldFiles();
+
+    this.logger.log('✅ Unified documentation generated successfully.');
   }
 
-  private async generateFlowGraph(
+  private buildFlowGraph(
     emitters: EmitterInfo[],
     listeners: ListenerInfo[],
-  ) {
-    let mermaidCode = 'graph TD;\n\n';
-
-    // --- Style Definitions ---
-    mermaidCode += `    classDef emitterStyle fill:#d4edda,stroke:#c3e6cb,color:#155724\n`;
-    mermaidCode += `    classDef handlerStyle fill:#d1ecf1,stroke:#bee5eb,color:#0c5460\n`;
-    mermaidCode += `    classDef listenerStyle fill:#fff3cd,stroke:#ffeeba,color:#856404\n`;
-    mermaidCode += `    classDef eventStyle fill:#f8d7da,stroke:#f5c6cb,color:#721c24,stroke-width:2px,font-weight:bold\n\n`;
-
-    const nodes = new Map<string, string>();
-    let i = 0;
-    const getNodeId = (name: string) => {
-      if (!nodes.has(name)) {
-        const cleanName = name.replace(/[^\w\s.-]/gi, '_');
-        nodes.set(name, `N${i++}_${cleanName}`);
-      }
-      return nodes.get(name);
-    };
+    gates: LogicalAndGateMetadata[],
+    allEventNames: Set<string>,
+  ): string {
+    this.mermaidParser.clear();
 
     const emitterMethodNames = new Set(
       emitters.map((e) => `${e.className}.${e.methodName}`),
@@ -227,93 +94,178 @@ export class EventDocumentationService {
     );
 
     const allMethods = new Set([...emitterMethodNames, ...listenerMethodNames]);
-    const allEventNames = new Set([
-      ...emitters.map((e) => e.eventName),
-      ...listeners.map((l) => l.eventName),
-    ]);
-
-    const emitterNodeIds: string[] = [];
-    const handlerNodeIds: string[] = [];
-    const listenerNodeIds: string[] = [];
-    const eventNodeIds: string[] = [];
-
-    // --- Node Definitions ---
     for (const method of allMethods) {
-      const nodeId = getNodeId(method);
-      if (!nodeId) continue;
-
-      mermaidCode += `    ${nodeId}["${method}"]\n`;
       const isEmitter = emitterMethodNames.has(method);
       const isListener = listenerMethodNames.has(method);
-
-      if (isEmitter && isListener) {
-        handlerNodeIds.push(nodeId);
-      } else if (isEmitter) {
-        emitterNodeIds.push(nodeId);
-      } else if (isListener) {
-        listenerNodeIds.push(nodeId);
-      }
+      const type =
+        isEmitter && isListener
+          ? 'handler'
+          : isEmitter
+            ? 'emitter'
+            : 'listener';
+      this.mermaidParser.addNode(method, type, 'rect');
     }
 
     for (const eventName of allEventNames) {
-      const nodeId = getNodeId(eventName);
-      if (!nodeId) continue;
-      // Use stadium shape for events
-      mermaidCode += `    ${nodeId}(["${eventName}"])\n`;
-      eventNodeIds.push(nodeId);
+      const anchor = `#${eventName.replace(/[^\w-]/gi, '').toLowerCase()}`;
+      this.mermaidParser.addNode(
+        eventName,
+        'event',
+        'stadium',
+        anchor,
+        `Go to ${eventName} details`,
+      );
     }
-    mermaidCode += '\n';
 
-    // --- Edge Definitions ---
+    for (const gate of gates) {
+      this.mermaidParser.addNode(gate.gateName, 'gate', 'rect');
+    }
+
     for (const emitter of emitters) {
-      const emitterNode = `${emitter.className}.${emitter.methodName}`;
-      mermaidCode += `    ${getNodeId(emitterNode)} -- Emits --> ${getNodeId(
+      this.mermaidParser.addEdge(
+        `${emitter.className}.${emitter.methodName}`,
         emitter.eventName,
-      )}\n`;
+        'Emite',
+        'solid',
+      );
     }
+
     for (const listener of listeners) {
-      const listenerNode = `${listener.className}.${listener.methodName}`;
-      mermaidCode += `    ${getNodeId(
+      this.mermaidParser.addEdge(
         listener.eventName,
-      )} -. Triggers .-> ${getNodeId(listenerNode)}\n`;
-    }
-    mermaidCode += '\n';
-
-    // --- Style Assignments ---
-    if (emitterNodeIds.length > 0) {
-      mermaidCode += `    class ${emitterNodeIds.join(',')} emitterStyle\n`;
-    }
-    if (handlerNodeIds.length > 0) {
-      mermaidCode += `    class ${handlerNodeIds.join(',')} handlerStyle\n`;
-    }
-    if (listenerNodeIds.length > 0) {
-      mermaidCode += `    class ${listenerNodeIds.join(',')} listenerStyle\n`;
-    }
-    if (eventNodeIds.length > 0) {
-      mermaidCode += `    class ${eventNodeIds.join(',')} eventStyle\n`;
+        `${listener.className}.${listener.methodName}`,
+        'Dispara',
+        'dotted',
+      );
     }
 
-    // Store raw mermaid code for the controller
-    this.flowGraphContent = mermaidCode;
+    for (const gate of gates) {
+      const targetMethod = `${gate.className}.${gate.methodName}`;
+      this.mermaidParser.addNode(targetMethod, 'handler', 'rect');
+      for (const eventName of gate.dependsOn) {
+        this.mermaidParser.addEdge(
+          eventName,
+          gate.gateName,
+          'Dispara',
+          'dotted',
+        );
+      }
+      this.mermaidParser.addEdge(
+        gate.gateName,
+        targetMethod,
+        'Dispara',
+        'dotted',
+      );
+    }
 
-    // Construct full markdown for the file
-    const fileContent = `# Event Flow Graph\n\nThis document is auto-generated by the \`EventDocumentationService\`. Do not edit manually.\n\n\`\`\`mermaid\n${mermaidCode}\`\`\`\n`;
+    const mermaidCode = this.mermaidParser.build();
+    this.flowGraphContent = mermaidCode; // Keep it for the controller endpoint
+    return mermaidCode;
+  }
 
-    const outputPath = join(
-      process.cwd(),
-      'docs',
-      'generated',
-      'EVENT_FLOW.md',
+  private buildCatalog(
+    emitters: EmitterInfo[],
+    listeners: ListenerInfo[],
+    allEventNames: Set<string>,
+  ): string {
+    let catalogContent = '';
+    for (const eventName of allEventNames) {
+      const eventEmitters = emitters.filter((e) => e.eventName === eventName);
+      const eventListeners = listeners.filter((l) => l.eventName === eventName);
+      const description =
+        eventEmitters[0]?.description || 'No description provided.';
+
+      catalogContent += `### \`${eventName}\`\n\n`;
+      catalogContent += `**Description**: ${description}\n\n`;
+
+      if (eventEmitters.length > 0) {
+        catalogContent += `**Emitted By**:\n`;
+        catalogContent += eventEmitters
+          .map((e) => `- \`${e.className}.${e.methodName}\``)
+          .join('\n');
+        catalogContent += '\n\n';
+      }
+
+      if (eventListeners.length > 0) {
+        catalogContent += `**Listened By**:\n`;
+        catalogContent += eventListeners
+          .map((l) => `- \`${l.className}.${l.methodName}\``)
+          .join('\n');
+        catalogContent += '\n\n';
+      }
+      catalogContent += '---\n';
+    }
+    return catalogContent;
+  }
+
+  private discoverSagaStarters(
+    emitters: EmitterInfo[],
+    listeners: ListenerInfo[],
+  ) {
+    const listenerMethodIds = new Set(
+      listeners.map((l) => `${l.className}.${l.methodName}`),
     );
-    await this.writeFileIfChanged(outputPath, fileContent);
+    const starterMethods = new Map<string, EmitterInfo>();
+    for (const emitter of emitters) {
+      const emitterMethodId = `${emitter.className}.${emitter.methodName}`;
+      if (
+        !listenerMethodIds.has(emitterMethodId) &&
+        emitter.eventName.endsWith('.init')
+      ) {
+        starterMethods.set(emitterMethodId, emitter);
+      }
+    }
+    this.sagaStarters = Array.from(starterMethods.values());
+  }
+
+  private async discoverEmitters(): Promise<EmitterInfo[]> {
+    const providers = await this.discoveryService.providersWithMetaAtKey<
+      EmitsEventMetadata[]
+    >(EMITS_EVENT_METADATA_KEY);
+    return providers.flatMap((p) =>
+      p.meta.flatMap((m) => {
+        const base = { className: m.className, methodName: m.methodName };
+        const events = [];
+        if (m.onInit)
+          events.push({
+            ...base,
+            eventName: m.onInit.name,
+            description: m.onInit.description || '',
+          });
+        if (m.onSuccess)
+          events.push({
+            ...base,
+            eventName: m.onSuccess.name,
+            description: m.onSuccess.description || '',
+          });
+        if (m.onFailure)
+          events.push({
+            ...base,
+            eventName: m.onFailure.name,
+            description: m.onFailure.description || '',
+          });
+        return events;
+      }),
+    );
+  }
+
+  private async discoverListeners(): Promise<ListenerInfo[]> {
+    const providers = await this.discoveryService.providersWithMetaAtKey<
+      OnEventDocMetadata[]
+    >(ON_EVENT_DOC_METADATA_KEY);
+    return providers.flatMap((provider) => provider.meta);
+  }
+
+  private async discoverLogicalAndGates(): Promise<LogicalAndGateMetadata[]> {
+    const providers = await this.discoveryService.providersWithMetaAtKey<
+      LogicalAndGateMetadata[]
+    >(LOGICAL_AND_GATE_METADATA_KEY);
+    return providers.flatMap((provider) => provider.meta);
   }
 
   private async writeFileIfChanged(path: string, content: string) {
     const dir = parse(path).dir;
-    if (!existsSync(dir)) {
-      await mkdir(dir, { recursive: true });
-    }
-
+    if (!existsSync(dir)) await mkdir(dir, { recursive: true });
     if (existsSync(path)) {
       const existingContent = await readFile(path, 'utf-8');
       if (existingContent === content) {
@@ -321,8 +273,19 @@ export class EventDocumentationService {
         return;
       }
     }
-
     await writeFile(path, content);
     this.logger.log(`Documentation file ${parse(path).base} written.`);
+  }
+
+  private async cleanupOldFiles() {
+    const oldFiles = ['EVENT_CATALOG.md', 'EVENT_FLOW.md'].map((f) =>
+      join(process.cwd(), 'docs', 'generated', f),
+    );
+    for (const file of oldFiles) {
+      if (existsSync(file)) {
+        await rm(file);
+        this.logger.log(`Removed old documentation file: ${parse(file).base}`);
+      }
+    }
   }
 }

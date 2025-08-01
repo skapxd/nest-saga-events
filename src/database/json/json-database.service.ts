@@ -34,7 +34,7 @@ export class JsonDatabaseService implements OnModuleInit {
 
   async getCollection<T>(collectionName: string): Promise<T[]> {
     await this.db.read();
-    return this.db.data[collectionName] || [];
+    return (this.db.data[collectionName] as T[]) || [];
   }
 
   async findInCollection<T>(
@@ -42,7 +42,7 @@ export class JsonDatabaseService implements OnModuleInit {
     predicate: (item: T) => boolean,
   ): Promise<T[]> {
     await this.db.read();
-    const collection = this.db.data[collectionName] || [];
+    const collection = (this.db.data[collectionName] as T[]) || [];
     return collection.filter(predicate);
   }
 
@@ -52,7 +52,7 @@ export class JsonDatabaseService implements OnModuleInit {
     update: Partial<T>,
   ): Promise<void> {
     await this.db.read();
-    const collection = this.db.data[collectionName] || [];
+    const collection = (this.db.data[collectionName] as T[]) || [];
     const itemIndex = collection.findIndex(predicate);
 
     if (itemIndex > -1) {

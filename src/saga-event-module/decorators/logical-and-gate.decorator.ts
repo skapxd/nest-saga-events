@@ -23,11 +23,7 @@ export const LogicalAndGate = (options: {
   name: string;
   dependsOn: AppEventName[];
 }): MethodDecorator => {
-  return (
-    target: object,
-    propertyKey: string | symbol,
-    _descriptor: PropertyDescriptor,
-  ) => {
+  return (target: object, propertyKey: string | symbol) => {
     const className = target.constructor.name;
     const methodName = propertyKey.toString();
 
