@@ -16,6 +16,11 @@ import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join, parse } from 'path';
 import { existsSync } from 'fs';
 
+import {
+  DEPENDS_ON_EVENT_METADATA_KEY,
+  DependsOnEventMetadata,
+} from '../decorators/depends-on-event.decorator';
+
 @Injectable()
 export class EventDocumentationService {
   private readonly logger = new Logger(EventDocumentationService.name);
@@ -113,12 +118,14 @@ export class EventDocumentationService {
   }
 
   private async discoverListeners(): Promise<ListenerInfo[]> {
-    const providers = await this.discoveryService.providersWithMetaAtKey<
-      OnEventDocMetadata[]
-    >(ON_EVENT_DOC_METADATA_KEY);
     const listeners: ListenerInfo[] = [];
 
-    for (const provider of providers) {
+    // Discover actual event listeners from @OnEventDoc
+    const onEventProviders = await this.discoveryService.providersWithMetaAtKey<
+      OnEventDocMetadata[]
+    >(ON_EVENT_DOC_METADATA_KEY);
+
+    for (const provider of onEventProviders) {
       const metadataList = provider.meta;
       for (const metadata of metadataList) {
         listeners.push({
@@ -128,6 +135,24 @@ export class EventDocumentationService {
         });
       }
     }
+
+    // Discover logical dependencies from @DependsOnEvent
+    const dependsOnProviders =
+      await this.discoveryService.providersWithMetaAtKey<
+        DependsOnEventMetadata[]
+      >(DEPENDS_ON_EVENT_METADATA_KEY);
+
+    for (const provider of dependsOnProviders) {
+      const metadataList = provider.meta;
+      for (const metadata of metadataList) {
+        listeners.push({
+          eventName: metadata.eventName,
+          className: metadata.className,
+          methodName: metadata.methodName,
+        });
+      }
+    }
+
     return listeners;
   }
 
@@ -178,33 +203,68 @@ export class EventDocumentationService {
   ) {
     let mermaidCode = 'graph TD;\n\n';
 
+    // --- Style Definitions ---
+    mermaidCode += `    classDef emitterStyle fill:#d4edda,stroke:#c3e6cb,color:#155724\n`;
+    mermaidCode += `    classDef handlerStyle fill:#d1ecf1,stroke:#bee5eb,color:#0c5460\n`;
+    mermaidCode += `    classDef listenerStyle fill:#fff3cd,stroke:#ffeeba,color:#856404\n`;
+    mermaidCode += `    classDef eventStyle fill:#f8d7da,stroke:#f5c6cb,color:#721c24,stroke-width:2px,font-weight:bold\n\n`;
+
     const nodes = new Map<string, string>();
     let i = 0;
     const getNodeId = (name: string) => {
       if (!nodes.has(name)) {
-        const cleanName = name.replace(/[^\w\s]/gi, '_');
+        const cleanName = name.replace(/[^\w\s.-]/gi, '_');
         nodes.set(name, `N${i++}_${cleanName}`);
       }
       return nodes.get(name);
     };
 
-    for (const emitter of emitters) {
-      const emitterNode = `${emitter.className}.${emitter.methodName}`;
-      mermaidCode += `    ${getNodeId(emitterNode)}["${emitterNode}"]\n`;
-    }
-    for (const listener of listeners) {
-      const listenerNode = `${listener.className}.${listener.methodName}`;
-      mermaidCode += `    ${getNodeId(listenerNode)}["${listenerNode}"]\n`;
-    }
+    const emitterMethodNames = new Set(
+      emitters.map((e) => `${e.className}.${e.methodName}`),
+    );
+    const listenerMethodNames = new Set(
+      listeners.map((l) => `${l.className}.${l.methodName}`),
+    );
+
+    const allMethods = new Set([...emitterMethodNames, ...listenerMethodNames]);
     const allEventNames = new Set([
       ...emitters.map((e) => e.eventName),
       ...listeners.map((l) => l.eventName),
     ]);
+
+    const emitterNodeIds: string[] = [];
+    const handlerNodeIds: string[] = [];
+    const listenerNodeIds: string[] = [];
+    const eventNodeIds: string[] = [];
+
+    // --- Node Definitions ---
+    for (const method of allMethods) {
+      const nodeId = getNodeId(method);
+      if (!nodeId) continue;
+
+      mermaidCode += `    ${nodeId}["${method}"]\n`;
+      const isEmitter = emitterMethodNames.has(method);
+      const isListener = listenerMethodNames.has(method);
+
+      if (isEmitter && isListener) {
+        handlerNodeIds.push(nodeId);
+      } else if (isEmitter) {
+        emitterNodeIds.push(nodeId);
+      } else if (isListener) {
+        listenerNodeIds.push(nodeId);
+      }
+    }
+
     for (const eventName of allEventNames) {
-      mermaidCode += `    ${getNodeId(eventName)}("${eventName}")\n`;
+      const nodeId = getNodeId(eventName);
+      if (!nodeId) continue;
+      // Use stadium shape for events
+      mermaidCode += `    ${nodeId}(["${eventName}"])\n`;
+      eventNodeIds.push(nodeId);
     }
     mermaidCode += '\n';
 
+    // --- Edge Definitions ---
     for (const emitter of emitters) {
       const emitterNode = `${emitter.className}.${emitter.methodName}`;
       mermaidCode += `    ${getNodeId(emitterNode)} -- Emits --> ${getNodeId(
@@ -215,7 +275,22 @@ export class EventDocumentationService {
       const listenerNode = `${listener.className}.${listener.methodName}`;
       mermaidCode += `    ${getNodeId(
         listener.eventName,
-      )} -- Triggers --> ${getNodeId(listenerNode)}\n`;
+      )} -. Triggers .-> ${getNodeId(listenerNode)}\n`;
+    }
+    mermaidCode += '\n';
+
+    // --- Style Assignments ---
+    if (emitterNodeIds.length > 0) {
+      mermaidCode += `    class ${emitterNodeIds.join(',')} emitterStyle\n`;
+    }
+    if (handlerNodeIds.length > 0) {
+      mermaidCode += `    class ${handlerNodeIds.join(',')} handlerStyle\n`;
+    }
+    if (listenerNodeIds.length > 0) {
+      mermaidCode += `    class ${listenerNodeIds.join(',')} listenerStyle\n`;
+    }
+    if (eventNodeIds.length > 0) {
+      mermaidCode += `    class ${eventNodeIds.join(',')} eventStyle\n`;
     }
 
     // Store raw mermaid code for the controller

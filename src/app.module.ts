@@ -5,9 +5,16 @@ import { SagaEventModule } from './saga-event-module/saga-event.module';
 import { SimpleModule } from './sample/simple/simple.module';
 import { ECommerceModule } from './sample/ecommerce/ecommerce.module';
 import { DatabaseModule } from './database/database.module';
+import { VideoProcessingModule } from './sample/video-processing/video-processing.module';
 
 @Module({
-  imports: [DatabaseModule, SagaEventModule, SimpleModule, ECommerceModule],
+  imports: [
+    DatabaseModule,
+    SagaEventModule,
+    SimpleModule,
+    ECommerceModule,
+    VideoProcessingModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

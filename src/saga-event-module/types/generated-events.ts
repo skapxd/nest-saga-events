@@ -91,4 +91,76 @@ export const AppEvents = {
     description: 'Fired when the payment is rejected.',
     payloadClass: undefined,
   },
+
+  /**
+   * Fired when a video is uploaded and ready for processing.
+   */
+  VIDEO_UPLOADED: {
+    name: 'video.uploaded',
+    description: 'Fired when a video is uploaded and ready for processing.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired if the initial video upload processing fails.
+   */
+  VIDEO_UPLOAD_FAILED: {
+    name: 'video.upload.failed',
+    description: 'Fired if the initial video upload processing fails.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired when video transcoding is complete.
+   */
+  VIDEO_TRANSCODED_SUCCESS: {
+    name: 'video.transcoded.success',
+    description: 'Fired when video transcoding is complete.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired if video transcoding fails.
+   */
+  VIDEO_TRANSCODED_FAILURE: {
+    name: 'video.transcoded.failure',
+    description: 'Fired if video transcoding fails.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired when a video thumbnail is generated.
+   */
+  THUMBNAIL_GENERATED_SUCCESS: {
+    name: 'thumbnail.generated.success',
+    description: 'Fired when a video thumbnail is generated.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired if thumbnail generation fails.
+   */
+  THUMBNAIL_GENERATED_FAILURE: {
+    name: 'thumbnail.generated.failure',
+    description: 'Fired if thumbnail generation fails.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired when the video is fully processed and published.
+   */
+  VIDEO_PUBLISHED_SUCCESS: {
+    name: 'video.published.success',
+    description: 'Fired when the video is fully processed and published.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired if the final publishing step fails.
+   */
+  VIDEO_PUBLISHED_FAILURE: {
+    name: 'video.published.failure',
+    description: 'Fired if the final publishing step fails.',
+    payloadClass: undefined,
+  },
 } as const;

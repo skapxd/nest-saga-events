@@ -45,4 +45,20 @@ export class JsonDatabaseService implements OnModuleInit {
     const collection = this.db.data[collectionName] || [];
     return collection.filter(predicate);
   }
+
+  async updateCollection<T>(
+    collectionName: string,
+    predicate: (item: T) => boolean,
+    update: Partial<T>,
+  ): Promise<void> {
+    await this.db.read();
+    const collection = this.db.data[collectionName] || [];
+    const itemIndex = collection.findIndex(predicate);
+
+    if (itemIndex > -1) {
+      collection[itemIndex] = { ...collection[itemIndex], ...update };
+      this.db.data[collectionName] = collection;
+      await this.db.write();
+    }
+  }
 }
