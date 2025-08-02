@@ -5,8 +5,6 @@ import { CausationEvent } from '#/src/saga-event-module/decorators/causation-eve
 import { EventPayload } from '#/src/saga-event-module/interfaces/event.interfaces';
 import { JsonDatabaseService } from '#/src/database/json/json-database.service';
 
-import { LogicalAndGate } from '#/src/saga-event-module/decorators/logical-and-gate.decorator';
-
 interface VideoProcessingState {
   correlationId: string;
   hasTranscodingFinished: boolean;
@@ -81,10 +79,7 @@ export class PublishingService {
       description: 'Fired if the final publishing step fails.',
     },
   })
-  @LogicalAndGate({
-    name: 'All Video Tasks Complete',
-    dependsOn: ['video.transcoded.success', 'thumbnail.generated.success'],
-  })
+  @OnEventDoc(['video.transcoded.success', 'thumbnail.generated.success'])
   private publishVideo(state: VideoProcessingState) {
     // In a real app, this would combine the data from all payloads
     // and move the video to its final destination.

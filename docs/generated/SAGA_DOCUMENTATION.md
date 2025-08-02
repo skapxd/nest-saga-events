@@ -49,7 +49,6 @@ graph TD;
         N34_thumbnail.generated.failure(["thumbnail.generated.failure"])
         N35_video.published.success(["video.published.success"])
         N36_video.published.failure(["video.published.failure"])
-        N37_All_Video_Tasks_Complete["All Video Tasks Complete"]
 
         N0_UserService.createUser -- Emite --> N17_user.creation.init
         N0_UserService.createUser -- Emite --> N18_user.created.success
@@ -83,35 +82,33 @@ graph TD;
         N29_video.uploaded -. Dispara .-> N7_ThumbnailService.handleVideoUploaded
         N31_video.transcoded.success -. Dispara .-> N15_PublishingService.handleTranscodingSuccess
         N33_thumbnail.generated.success -. Dispara .-> N16_PublishingService.handleThumbnailSuccess
-        N31_video.transcoded.success -. Dispara .-> N37_All_Video_Tasks_Complete
-        N33_thumbnail.generated.success -. Dispara .-> N37_All_Video_Tasks_Complete
-        N37_All_Video_Tasks_Complete -. Dispara .-> N8_PublishingService.publishVideo
+        N31_video.transcoded.success -. Dispara .-> N8_PublishingService.publishVideo
+        N33_thumbnail.generated.success -. Dispara .-> N8_PublishingService.publishVideo
     end
 
     subgraph Leyenda
         direction LR
-        N38_Emisor__Inicia_un_proceso_de_negocio_o__Saga__["Emisor (Inicia un proceso de negocio o 'Saga')"]
-        N39_Manejador__Recibe_un_evento_y_emite_otros_para_continuar_el_flujo_["Manejador (Recibe un evento y emite otros para continuar el flujo)"]
-        N40_Receptor__Recibe_un_evento_y_finaliza_una_rama_del_flujo__ej__notificar_["Receptor (Recibe un evento y finaliza una rama del flujo, ej: notificar)"]
-        N41_Evento__Mensaje_que_representa_un_hecho_ocurrido_en_el_sistema_(("Evento (Mensaje que representa un hecho ocurrido en el sistema)"))
-        N42_Compuerta_L_gica__Espera_varios_eventos_antes_de_continuar_["Compuerta Lógica (Espera varios eventos antes de continuar)"]
+        N37_Emisor__Inicia_un_proceso_de_negocio_o__Saga__["Emisor (Inicia un proceso de negocio o 'Saga')"]
+        N38_Manejador__Recibe_un_evento_y_emite_otros_para_continuar_el_flujo_["Manejador (Recibe un evento y emite otros para continuar el flujo)"]
+        N39_Receptor__Recibe_un_evento_y_finaliza_una_rama_del_flujo__ej__notificar_["Receptor (Recibe un evento y finaliza una rama del flujo, ej: notificar)"]
+        N40_Evento__Mensaje_que_representa_un_hecho_ocurrido_en_el_sistema_(("Evento (Mensaje que representa un hecho ocurrido en el sistema)"))
+        N41_Compuerta_L_gica__Espera_varios_eventos_antes_de_continuar_["Compuerta Lógica (Espera varios eventos antes de continuar)"]
         subgraph "Relaciones"
             direction LR
-            N43_A( ) -- Emite --> N44_B( )
-            N45_C( ) -. Dispara .-> N46_D( )
+            N42_A( ) -- Emite --> N43_B( )
+            N44_C( ) -. Dispara .-> N45_D( )
         end
     end
 
-    class N0_UserService.createUser,N1_UserService.methodThatReturnsBuffer,N2_OrderService.placeOrder,N5_VideoService.processUploadedVideo,N8_PublishingService.publishVideo emitterStyle
-    class N3_InventoryService.handleOrderPlacement,N4_PaymentService.handleInventoryReserved,N6_TranscodingService.handleVideoUploaded,N7_ThumbnailService.handleVideoUploaded handlerStyle
+    class N0_UserService.createUser,N1_UserService.methodThatReturnsBuffer,N2_OrderService.placeOrder,N5_VideoService.processUploadedVideo emitterStyle
+    class N3_InventoryService.handleOrderPlacement,N4_PaymentService.handleInventoryReserved,N6_TranscodingService.handleVideoUploaded,N7_ThumbnailService.handleVideoUploaded,N8_PublishingService.publishVideo handlerStyle
     class N9_NotificationService.handleUserCreatedSuccess,N10_NotificationService.handleUserCreatedFailure,N11_NotificationService.handleOrderConfirmed,N12_NotificationService.handleInventoryFailure,N13_NotificationService.handlePaymentFailure,N14_InventoryService.handlePaymentFailure,N15_PublishingService.handleTranscodingSuccess,N16_PublishingService.handleThumbnailSuccess listenerStyle
     class N17_user.creation.init,N18_user.created.success,N19_user.created.failure,N20_user.buffer.success,N21_user.buffer.failure,N22_order.placement.init,N23_order.confirmed.success,N24_order.placement.failed,N25_inventory.reserved.success,N26_inventory.reserved.failure,N27_payment.processed.success,N28_payment.processed.failure,N29_video.uploaded,N30_video.upload.failed,N31_video.transcoded.success,N32_video.transcoded.failure,N33_thumbnail.generated.success,N34_thumbnail.generated.failure,N35_video.published.success,N36_video.published.failure eventStyle
-    class N37_All_Video_Tasks_Complete gateStyle
-    class N38_Emisor__Inicia_un_proceso_de_negocio_o__Saga__ emitterStyle
-    class N39_Manejador__Recibe_un_evento_y_emite_otros_para_continuar_el_flujo_ handlerStyle
-    class N40_Receptor__Recibe_un_evento_y_finaliza_una_rama_del_flujo__ej__notificar_ listenerStyle
-    class N41_Evento__Mensaje_que_representa_un_hecho_ocurrido_en_el_sistema_ eventStyle
-    class N42_Compuerta_L_gica__Espera_varios_eventos_antes_de_continuar_ gateStyle
+    class N37_Emisor__Inicia_un_proceso_de_negocio_o__Saga__ emitterStyle
+    class N38_Manejador__Recibe_un_evento_y_emite_otros_para_continuar_el_flujo_ handlerStyle
+    class N39_Receptor__Recibe_un_evento_y_finaliza_una_rama_del_flujo__ej__notificar_ listenerStyle
+    class N40_Evento__Mensaje_que_representa_un_hecho_ocurrido_en_el_sistema_ eventStyle
+    class N41_Compuerta_L_gica__Espera_varios_eventos_antes_de_continuar_ gateStyle
     click N17_user.creation.init "#usercreationinit" "Go to user.creation.init details"
     click N18_user.created.success "#usercreatedsuccess" "Go to user.created.success details"
     click N19_user.created.failure "#usercreatedfailure" "Go to user.created.failure details"
@@ -283,6 +280,7 @@ graph TD;
 
 **Listened By**:
 - `PublishingService.handleTranscodingSuccess`
+- `PublishingService.publishVideo`
 
 ---
 ### `video.transcoded.failure`
@@ -302,6 +300,7 @@ graph TD;
 
 **Listened By**:
 - `PublishingService.handleThumbnailSuccess`
+- `PublishingService.publishVideo`
 
 ---
 ### `thumbnail.generated.failure`

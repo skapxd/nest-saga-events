@@ -12,14 +12,12 @@ import {
   ON_EVENT_DOC_METADATA_KEY,
   OnEventDocMetadata,
 } from '../decorators/on-event-doc.decorator';
-import {
-  LOGICAL_AND_GATE_METADATA_KEY,
-  LogicalAndGateMetadata,
-} from '../decorators/logical-and-gate.decorator';
+
 import { writeFile, mkdir, readFile, rm } from 'fs/promises';
 import { join, parse } from 'path';
 import { existsSync } from 'fs';
 import { MermaidParserService } from '#/src/mermaid-parser/mermaid-parser.service';
+import { AppEventName } from '../types';
 
 @Injectable()
 export class EventDocumentationService {
@@ -46,20 +44,15 @@ export class EventDocumentationService {
     // 1. Discover all elements
     const emitters = await this.discoverEmitters();
     const listeners = await this.discoverListeners();
-    const gates = await this.discoverLogicalAndGates();
     this.discoverSagaStarters(emitters, listeners);
 
     // 2. Build the graph and catalog strings
-    const allEventNames = new Set([
+    const allEventNames = new Set<AppEventName>([
       ...emitters.map((e) => e.eventName),
       ...listeners.map((l) => l.eventName),
     ]);
-    const flowGraph = this.buildFlowGraph(
-      emitters,
-      listeners,
-      gates,
-      allEventNames,
-    );
+
+    const flowGraph = this.buildFlowGraph(emitters, listeners, allEventNames);
     const catalog = this.buildCatalog(emitters, listeners, allEventNames);
 
     // 3. Combine into a single file
@@ -81,7 +74,6 @@ export class EventDocumentationService {
   private buildFlowGraph(
     emitters: EmitterInfo[],
     listeners: ListenerInfo[],
-    gates: LogicalAndGateMetadata[],
     allEventNames: Set<string>,
   ): string {
     this.mermaidParser.clear();
@@ -117,10 +109,6 @@ export class EventDocumentationService {
       );
     }
 
-    for (const gate of gates) {
-      this.mermaidParser.addNode(gate.gateName, 'gate', 'rect');
-    }
-
     for (const emitter of emitters) {
       this.mermaidParser.addEdge(
         `${emitter.className}.${emitter.methodName}`,
@@ -134,25 +122,6 @@ export class EventDocumentationService {
       this.mermaidParser.addEdge(
         listener.eventName,
         `${listener.className}.${listener.methodName}`,
-        'Dispara',
-        'dotted',
-      );
-    }
-
-    for (const gate of gates) {
-      const targetMethod = `${gate.className}.${gate.methodName}`;
-      this.mermaidParser.addNode(targetMethod, 'handler', 'rect');
-      for (const eventName of gate.dependsOn) {
-        this.mermaidParser.addEdge(
-          eventName,
-          gate.gateName,
-          'Dispara',
-          'dotted',
-        );
-      }
-      this.mermaidParser.addEdge(
-        gate.gateName,
-        targetMethod,
         'Dispara',
         'dotted',
       );
@@ -253,14 +222,16 @@ export class EventDocumentationService {
     const providers = await this.discoveryService.providersWithMetaAtKey<
       OnEventDocMetadata[]
     >(ON_EVENT_DOC_METADATA_KEY);
-    return providers.flatMap((provider) => provider.meta);
-  }
 
-  private async discoverLogicalAndGates(): Promise<LogicalAndGateMetadata[]> {
-    const providers = await this.discoveryService.providersWithMetaAtKey<
-      LogicalAndGateMetadata[]
-    >(LOGICAL_AND_GATE_METADATA_KEY);
-    return providers.flatMap((provider) => provider.meta);
+    return providers.flatMap((provider) =>
+      provider.meta.flatMap((metadata) => {
+        const { eventName, ...rest } = metadata;
+        if (Array.isArray(eventName)) {
+          return eventName.map((e) => ({ ...rest, eventName: e }));
+        }
+        return [{ ...rest, eventName }];
+      }),
+    );
   }
 
   private async writeFileIfChanged(path: string, content: string) {

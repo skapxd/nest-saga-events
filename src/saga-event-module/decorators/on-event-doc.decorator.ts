@@ -8,13 +8,13 @@ import { AppEventName } from '../types';
 export const ON_EVENT_DOC_METADATA_KEY = Symbol('ON_EVENT_DOC_METADATA_KEY');
 
 export interface OnEventDocMetadata {
-  eventName: AppEventName;
+  eventName: AppEventName | AppEventName[];
   methodName: string;
   className: string;
 }
 
 export const OnEventDoc = (
-  eventName: AppEventName,
+  eventName: AppEventName | AppEventName[],
   options?: OnEventOptions,
 ): MethodDecorator => {
   const logger = new Logger(OnEventDoc.name);
@@ -46,11 +46,15 @@ export const OnEventDoc = (
       target.constructor,
     );
 
+    const eventNames = Array.isArray(eventName)
+      ? eventName.join(', ')
+      : eventName;
     logger.log(
-      `Registered listener for event ${eventName} on ${className}.${methodName}`,
+      `Registered listener for event(s) [${eventNames}] on ${className}.${methodName}`,
     );
 
     // 2. Call the original @OnEvent decorator to ensure functionality
+    // The underlying OnEvent decorator already supports string[] and AppEventName is a string type
     const asyncOptions = { ...options, async: true, suppressErrors: false };
     return OnEvent(eventName, asyncOptions)(target, propertyKey, descriptor);
   };
