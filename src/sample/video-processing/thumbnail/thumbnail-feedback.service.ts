@@ -12,7 +12,8 @@ export class ThumbnailFeedbackService {
     this.logger.error(
       '--- Thumbnail Feedback Service: Thumbnail Generation Failed ---',
     );
-    this.logger.error('An error occurred during thumbnail generation.', {
+    this.logger.error('An error occurred during thumbnail generation.');
+    this.logger.error({
       correlationId: payload.metadata.correlationId,
       error: payload.data,
     });

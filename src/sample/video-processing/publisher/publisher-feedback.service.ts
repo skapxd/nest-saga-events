@@ -10,7 +10,8 @@ export class PublisherFeedbackService {
   @OnEventDoc('video.published.failure')
   handlePublishingFailure(@CausationEvent() payload: EventPayload<any>) {
     this.logger.error('--- Publisher Feedback Service: Publishing Failed ---');
-    this.logger.error('An error occurred while publishing the video.', {
+    this.logger.error('An error occurred while publishing the video.');
+    this.logger.error({
       correlationId: payload.metadata.correlationId,
       error: payload.data,
     });

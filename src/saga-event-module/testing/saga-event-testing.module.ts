@@ -38,6 +38,9 @@ import { TypedEventEmitter } from '../helpers/typed-event-emitter';
       useValue: {
         addToCollection: vi.fn().mockResolvedValue(undefined),
         getCollection: vi.fn().mockResolvedValue([]),
+        updateCollection: vi.fn().mockResolvedValue(undefined),
+        deleteFromCollection: vi.fn().mockResolvedValue(undefined),
+        findInCollection: vi.fn().mockResolvedValue([]),
       },
     },
     {
@@ -61,7 +64,12 @@ import { TypedEventEmitter } from '../helpers/typed-event-emitter';
       },
     },
   ],
-  exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
+  exports: [
+    RequestContextService,
+    EventMetadataHelper,
+    TypedEventEmitter,
+    JsonDatabaseService,
+  ],
 })
 export class SagaEventTestingModule {
   constructor(
