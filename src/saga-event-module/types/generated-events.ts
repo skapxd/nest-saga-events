@@ -48,69 +48,6 @@ export const AppEvents = {
   },
 
   /**
-   * Starts the order placement process.
-   */
-  ORDER_PLACEMENT_INIT: {
-    name: 'order.placement.init',
-    description: 'Starts the order placement process.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when the order is fully confirmed and paid.
-   */
-  ORDER_CONFIRMED_SUCCESS: {
-    name: 'order.confirmed.success',
-    description: 'Fired when the order is fully confirmed and paid.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when any step in the order placement saga fails.
-   */
-  ORDER_PLACEMENT_FAILED: {
-    name: 'order.placement.failed',
-    description: 'Fired when any step in the order placement saga fails.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when stock has been successfully reserved.
-   */
-  INVENTORY_RESERVED_SUCCESS: {
-    name: 'inventory.reserved.success',
-    description: 'Fired when stock has been successfully reserved.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when there is not enough stock.
-   */
-  INVENTORY_RESERVED_FAILURE: {
-    name: 'inventory.reserved.failure',
-    description: 'Fired when there is not enough stock.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when the payment is successfully processed.
-   */
-  PAYMENT_PROCESSED_SUCCESS: {
-    name: 'payment.processed.success',
-    description: 'Fired when the payment is successfully processed.',
-    payloadClass: undefined,
-  },
-
-  /**
-   * Fired when the payment is rejected.
-   */
-  PAYMENT_PROCESSED_FAILURE: {
-    name: 'payment.processed.failure',
-    description: 'Fired when the payment is rejected.',
-    payloadClass: undefined,
-  },
-
-  /**
    * Fired when a video is uploaded and ready for processing.
    */
   VIDEO_UPLOADED: {

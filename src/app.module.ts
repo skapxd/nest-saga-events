@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SagaEventModule } from './saga-event-module/saga-event.module';
 import { SimpleModule } from './sample/simple/simple.module';
-import { ECommerceModule } from './sample/ecommerce/ecommerce.module';
 import { DatabaseModule } from './database/database.module';
 import { VideoProcessingModule } from './sample/video-processing/video-processing.module';
 
@@ -12,7 +11,6 @@ import { VideoProcessingModule } from './sample/video-processing/video-processin
     DatabaseModule,
     SagaEventModule,
     SimpleModule,
-    ECommerceModule,
     VideoProcessingModule,
   ],
   controllers: [AppController],

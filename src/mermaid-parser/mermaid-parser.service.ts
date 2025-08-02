@@ -160,12 +160,6 @@ export class MermaidParserService {
     mermaidCode += `    class ${legendListenerId} listenerStyle\n`;
     mermaidCode += `    class ${legendGateId} gateStyle\n`;
 
-    for (const node of this.graph.nodes) {
-      if (node.link) {
-        mermaidCode += `    click ${node.id} "${node.link}" "${node.tooltip || ''}"\n`;
-      }
-    }
-
     return mermaidCode;
   }
 }
