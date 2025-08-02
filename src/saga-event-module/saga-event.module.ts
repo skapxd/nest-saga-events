@@ -12,7 +12,6 @@ import { EventMetadataHelper } from './services/event-metadata.helper';
 import { EventLogService } from './services/event-log.service';
 import { RequestContextMiddleware } from './middleware/request-context.middleware';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EventPayload } from './interfaces/event.interfaces';
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
 import { EventGeneratorService } from './services/event-generator.service';
 import { EventDocumentationService } from './services/event-documentation.service';
@@ -20,14 +19,7 @@ import { EventDocumentationService } from './services/event-documentation.servic
 import { EventDocumentationController } from './controllers/event-documentation.controller';
 import { EventServiceLocator } from './services/event-service-locator';
 import { MermaidParserModule } from '#/src/mermaid-parser/mermaid-parser.module';
-
-export class TypedEventEmitter {
-  constructor(private readonly eventEmitter: EventEmitter2) {}
-
-  emit<T>(eventName: string, payload: EventPayload<T>) {
-    this.eventEmitter.emit(eventName, payload);
-  }
-}
+import { TypedEventEmitter } from './helpers/typed-event-emitter';
 
 @Global()
 @Module({

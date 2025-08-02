@@ -10,6 +10,7 @@ import { EventGeneratorService } from '../services/event-generator.service';
 import { EventDocumentationService } from '../services/event-documentation.service';
 import { EventServiceLocator } from '../services/event-service-locator';
 import { JsonDatabaseService } from '#/src/database/json/json-database.service';
+import { TypedEventEmitter } from '../helpers/typed-event-emitter';
 
 /**
  * A reusable testing module for any test that involves services using the @EmitsEvent decorator.
@@ -40,6 +41,12 @@ import { JsonDatabaseService } from '#/src/database/json/json-database.service';
       },
     },
     {
+      provide: TypedEventEmitter,
+      useFactory: (eventEmitter: EventEmitter2) =>
+        new TypedEventEmitter(eventEmitter),
+      inject: [EventEmitter2],
+    },
+    {
       provide: EventGeneratorService,
       useValue: {
         generate: vi.fn().mockResolvedValue(undefined),
@@ -54,7 +61,7 @@ import { JsonDatabaseService } from '#/src/database/json/json-database.service';
       },
     },
   ],
-  exports: [EventEmitterModule, RequestContextService, EventMetadataHelper],
+  exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
 })
 export class SagaEventTestingModule {
   constructor(

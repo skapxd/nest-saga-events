@@ -123,19 +123,33 @@ export class EventGeneratorService {
   }
 
   private async getRelativePath(payloadName: string): Promise<string | null> {
-    const files = await glob(`src/**/*.events.ts`);
+    const files = await glob('src/**/*.dto.ts', { absolute: true });
+    const matches: string[] = [];
+
     for (const file of files) {
       const content = await readFile(file, 'utf-8');
-      if (content.includes(`class ${payloadName}`)) {
-        const srcDir = join(process.cwd(), 'src');
-        const payloadPath = file
-          .replace(srcDir, '')
-          .replace(/\\/g, '/')
-          .replace('.ts', '');
-        return `#/${payloadPath}`;
+      if (content.includes(`export class ${payloadName}`)) {
+        matches.push(file);
       }
     }
-    return null;
+
+    if (matches.length === 0) {
+      this.logger.warn(`Could not find file for payload class: ${payloadName}`);
+      return null;
+    }
+
+    if (matches.length > 1) {
+      const fileList = matches.map((file) => `\n   - ${file}`).join('');
+      throw new Error(
+        `❌ Ambiguous payload class '${payloadName}' found in multiple files:${fileList}`,
+      );
+    }
+
+    const projectRoot = process.cwd();
+    const importPath = matches[0]
+      .replace(`${projectRoot}/src/`, '')
+      .replace('.ts', '');
+    return `#/src/${importPath}`;
   }
 
   private generateFileContent(

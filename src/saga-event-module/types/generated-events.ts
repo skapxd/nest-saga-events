@@ -30,6 +30,24 @@ export const AppEvents = {
   },
 
   /**
+   *
+   */
+  USER_BUFFER_SUCCESS: {
+    name: 'user.buffer.success',
+    description: '',
+    payloadClass: undefined,
+  },
+
+  /**
+   *
+   */
+  USER_BUFFER_FAILURE: {
+    name: 'user.buffer.failure',
+    description: '',
+    payloadClass: undefined,
+  },
+
+  /**
    * Starts the order placement process.
    */
   ORDER_PLACEMENT_INIT: {

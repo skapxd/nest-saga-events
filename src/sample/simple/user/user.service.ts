@@ -8,7 +8,9 @@ export class UserService {
 
   @EmitsEvent({
     onInit: { name: 'user.creation.init' },
-    onSuccess: { name: 'user.created.success' },
+    onSuccess: {
+      name: 'user.created.success',
+    },
     onFailure: { name: 'user.created.failure' },
   })
   async createUser(createUserDto: CreateUserDto) {
@@ -22,5 +24,13 @@ export class UserService {
     const user = { id: '12345', ...createUserDto };
     this.logger.log('User created in service:', user);
     return user;
+  }
+
+  @EmitsEvent({
+    onSuccess: { name: 'user.buffer.success' },
+    onFailure: { name: 'user.buffer.failure' },
+  })
+  async methodThatReturnsBuffer() {
+    return Buffer.from('this is a test buffer');
   }
 }

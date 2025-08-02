@@ -1,9 +1,11 @@
 import 'reflect-metadata';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { CAUSATION_EVENT_PARAM_INDEX } from './causation-event.decorator';
 import { EventPayload } from '../interfaces/event.interfaces';
 import { AppEventName } from '../types';
 import { EventServiceLocator } from '../services/event-service-locator';
+import { assertIsSerializable } from '../helpers/assert-is-serializable.helper';
 
 export const EMITS_EVENT_METADATA_KEY = Symbol('EMITS_EVENT_METADATA_KEY');
 
@@ -27,6 +29,11 @@ export const EmitsEvent = (options: {
   onFailure: EventDefinition;
 }): MethodDecorator => {
   const logger = new Logger(EmitsEvent.name);
+  const validationPipe = new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  });
 
   return (
     target: object,
@@ -38,7 +45,7 @@ export const EmitsEvent = (options: {
     const className = target.constructor.name;
     const methodName = String(propertyKey);
 
-    // Añadimos el nuevo metadato al array y lo guardamos de vuelta en el CONSTRUCTOR
+    // Register metadata for documentation generation
     const existingMetadataList =
       (Reflect.getMetadata(
         EMITS_EVENT_METADATA_KEY,
@@ -81,7 +88,7 @@ export const EmitsEvent = (options: {
       // Emit the onInit event if defined
       if (options.onInit) {
         const initPayload: EventPayload<any[]> = { metadata, data: args };
-        eventEmitter.emit(options.onInit.name, initPayload);
+        await eventEmitter.emitAsync(options.onInit.name, initPayload);
         logger.debug(
           `EVENT: ${options.onInit.name} | EventID: ${initPayload.metadata.eventId}`,
         );
@@ -89,8 +96,30 @@ export const EmitsEvent = (options: {
 
       try {
         const result = (await originalMethod.apply(this, args)) as T;
-        const successPayload: EventPayload<T> = { metadata, data: result };
-        eventEmitter.emit(options.onSuccess.name, successPayload);
+
+        // --- VALIDATION LOGIC ---
+        let successPayload: EventPayload<T> = { metadata, data: result };
+
+        if (options.onSuccess.payload) {
+          // Path 1: DTO is provided, use class-validator for deep validation.
+          const payloadInstance = plainToInstance(
+            options.onSuccess.payload,
+            successPayload,
+          );
+
+          await validationPipe.transform(payloadInstance, {
+            metatype: options.onSuccess.payload,
+            type: 'custom',
+          });
+
+          successPayload = payloadInstance as EventPayload<T>;
+        } else {
+          // Path 2: No DTO provided, perform a general serialization check.
+          assertIsSerializable(result, `${className}.${methodName}`);
+        }
+        // --- END VALIDATION LOGIC ---
+
+        await eventEmitter.emitAsync(options.onSuccess.name, successPayload);
 
         logger.debug(
           `EVENT: ${options.onSuccess.name} | EventID: ${successPayload.metadata.eventId}`,
@@ -105,7 +134,7 @@ export const EmitsEvent = (options: {
         );
         logger.error(error);
 
-        eventEmitter.emit(options.onFailure.name, failurePayload);
+        await eventEmitter.emitAsync(options.onFailure.name, failurePayload);
         // Explicitly return nothing to satisfy the void part of the union type
         return;
       }

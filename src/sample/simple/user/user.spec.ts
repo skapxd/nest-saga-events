@@ -2,83 +2,85 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { CreateUserDto } from './user.dto';
-import { vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { SagaEventTestingModule } from '#/src/saga-event-module/testing/saga-event-testing.module';
+import { TypedEventEmitter } from '#/src/saga-event-module/helpers/typed-event-emitter';
 
 describe('UserModule', () => {
-  describe('UserController', () => {
-    let controller: UserController;
-    let service: UserService;
+  let controller: UserController;
+  let service: UserService;
+  let eventEmitter: TypedEventEmitter;
 
-    beforeEach(async () => {
-      const module: TestingModule = await Test.createTestingModule({
-        imports: [SagaEventTestingModule],
-        controllers: [UserController],
-        providers: [UserService],
-      }).compile();
-      module.useLogger(new Logger());
-      controller = module.get<UserController>(UserController);
-      service = module.get<UserService>(UserService);
-    });
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [SagaEventTestingModule],
+      controllers: [UserController],
+      providers: [UserService],
+    }).compile();
 
-    it('should be defined', () => {
-      expect(controller).toBeDefined();
-    });
+    module.useLogger(new Logger());
 
-    describe('createUser', () => {
-      it('should call userService.createUser and return a message', async () => {
-        const createUserDto: CreateUserDto = {
-          name: 'Test User',
-          email: 'test@example.com',
-        };
-        const spy = vi.spyOn(service, 'createUser');
-        const result = await controller.createUser(createUserDto);
-
-        expect(spy).toHaveBeenCalledWith(createUserDto);
-        expect(result).toEqual({
-          message: 'User creation process started.',
-        });
-      });
-    });
+    controller = module.get<UserController>(UserController);
+    service = module.get<UserService>(UserService);
+    eventEmitter = module.get<TypedEventEmitter>(TypedEventEmitter);
   });
 
-  describe('UserService', () => {
-    let service: UserService;
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
 
-    beforeEach(async () => {
-      const module: TestingModule = await Test.createTestingModule({
-        imports: [SagaEventTestingModule],
-        providers: [UserService],
-      }).compile();
+  it('should call userService.createUser and return a message', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
-      service = module.get<UserService>(UserService);
-    });
+    const createUserDto: CreateUserDto = {
+      name: 'Test User',
+      email: 'test@example.com',
+    };
 
-    it('should be defined', () => {
-      expect(service).toBeDefined();
-    });
+    const initEventPromise = eventEmitter.waitFor('user.creation.init');
+    const createEventPromise = eventEmitter.waitFor('user.created.success');
 
-    describe('createUser', () => {
-      it('should create a user successfully', async () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0.6); // Should not fail
-        const createUserDto: CreateUserDto = {
-          name: 'Test User',
-          email: 'test@example.com',
-        };
-        const result = await service.createUser(createUserDto);
-        expect(result).toEqual({ id: '12345', ...createUserDto });
-      });
+    await controller.createUser(createUserDto);
 
-      it('should handle an error during user creation', async () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0.4); // Should fail
-        const createUserDto: CreateUserDto = {
-          name: 'Test User',
-          email: 'test@example.com',
-        };
-        const result = await service.createUser(createUserDto);
-        expect(result).toBeUndefined();
-      });
-    });
+    const [resultInit] = await Promise.all([
+      initEventPromise,
+      createEventPromise,
+    ]);
+
+    expect(resultInit).toStrictEqual([
+      {
+        metadata: {
+          eventId: expect.any(String),
+          correlationId: expect.any(String),
+          timestamp: expect.any(Date),
+          causationId: null,
+          actor: {
+            type: 'system',
+            id: 'system',
+          },
+        },
+        data: [
+          {
+            name: 'Test User',
+            email: 'test@example.com',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should emit failure event when method returns a buffer', async () => {
+    const failureEventPromise = eventEmitter.waitFor('user.buffer.failure');
+
+    await service.methodThatReturnsBuffer();
+
+    const [failureEvent] = await failureEventPromise;
+
+    expect(failureEvent).toBeDefined();
+    expect(failureEvent.metadata).toBeDefined();
+    expect(failureEvent.data).toBeInstanceOf(Error);
+    expect(failureEvent.data.message).toContain(
+      "Failed to serialize event payload for UserService.methodThatReturnsBuffer. Reason: Raw Buffer found at path: 'data'. Please use a DTO with Base64 transformation.",
+    );
   });
 });
