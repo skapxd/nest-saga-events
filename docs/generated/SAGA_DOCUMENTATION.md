@@ -5,10 +5,13 @@
 ```mermaid
 graph TD;
 
+    classDef event-successStyle fill:#d4edda,stroke:#c3e6cb,color:#155724
+    classDef event-failureStyle fill:#f8d7da,stroke:#f5c6cb,color:#721c24
+    classDef event-initStyle fill:#cce5ff,stroke:#b8daff,color:#004085
+    classDef event-defaultStyle fill:#e2e3e5,stroke:#d6d8db,color:#383d41
     classDef emitterStyle fill:#d4edda,stroke:#c3e6cb,color:#155724
     classDef handlerStyle fill:#d1ecf1,stroke:#bee5eb,color:#0c5460
     classDef listenerStyle fill:#fff3cd,stroke:#ffeeba,color:#856404
-    classDef eventStyle fill:#f8d7da,stroke:#f5c6cb,color:#721c24,stroke-width:2px,font-weight:bold
     classDef gateStyle fill:#e2e3e5,stroke:#d6d8db,color:#383d41
 
     subgraph "Flujo de Eventos"
@@ -105,11 +108,12 @@ graph TD;
     class N0_UserService.createUser,N1_UserService.methodThatReturnsBuffer,N2_OrderService.placeOrder,N5_VideoService.processUploadedVideo emitterStyle
     class N3_InventoryService.handleOrderPlacement,N4_PaymentService.handleInventoryReserved,N6_TranscodingService.handleVideoUploaded,N7_ThumbnailService.handleVideoUploaded,N8_VerificationService.verifyVideoProcessing,N9_PublisherService.publishVideo handlerStyle
     class N10_NotificationService.handleUserCreatedSuccess,N11_NotificationService.handleUserCreatedFailure,N12_NotificationService.handleOrderConfirmed,N13_NotificationService.handleInventoryFailure,N14_NotificationService.handlePaymentFailure,N15_InventoryService.handlePaymentFailure listenerStyle
-    class N16_user.creation.init,N17_user.created.success,N18_user.created.failure,N19_user.buffer.success,N20_user.buffer.failure,N21_order.placement.init,N22_order.confirmed.success,N23_order.placement.failed,N24_inventory.reserved.success,N25_inventory.reserved.failure,N26_payment.processed.success,N27_payment.processed.failure,N28_video.uploaded,N29_video.upload.failed,N30_video.transcoded.success,N31_video.transcoded.failure,N32_thumbnail.generated.success,N33_thumbnail.generated.failure,N34_video.ready.to.publish,N35_video.verification.failed,N36_video.published.success,N37_video.published.failure eventStyle
+    class N16_user.creation.init,N21_order.placement.init event-initStyle
+    class N17_user.created.success,N19_user.buffer.success,N22_order.confirmed.success,N24_inventory.reserved.success,N26_payment.processed.success,N28_video.uploaded,N30_video.transcoded.success,N32_thumbnail.generated.success,N34_video.ready.to.publish,N36_video.published.success event-successStyle
+    class N18_user.created.failure,N20_user.buffer.failure,N23_order.placement.failed,N25_inventory.reserved.failure,N27_payment.processed.failure,N29_video.upload.failed,N31_video.transcoded.failure,N33_thumbnail.generated.failure,N35_video.verification.failed,N37_video.published.failure event-failureStyle
     class N38_Emisor__Inicia_un_proceso_de_negocio_o__Saga__ emitterStyle
     class N39_Manejador__Recibe_un_evento_y_emite_otros_para_continuar_el_flujo_ handlerStyle
     class N40_Receptor__Recibe_un_evento_y_finaliza_una_rama_del_flujo__ej__notificar_ listenerStyle
-    class N41_Evento__Mensaje_que_representa_un_hecho_ocurrido_en_el_sistema_ eventStyle
     class N42_Compuerta_L_gica__Espera_varios_eventos_antes_de_continuar_ gateStyle
     click N16_user.creation.init "#usercreationinit" "Go to user.creation.init details"
     click N17_user.created.success "#usercreatedsuccess" "Go to user.created.success details"

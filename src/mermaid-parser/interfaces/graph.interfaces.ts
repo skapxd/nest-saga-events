@@ -1,4 +1,12 @@
-export type NodeType = 'emitter' | 'handler' | 'listener' | 'event' | 'gate';
+export type NodeType =
+  | 'emitter'
+  | 'handler'
+  | 'listener'
+  | 'gate'
+  | 'event-success'
+  | 'event-failure'
+  | 'event-init'
+  | 'event-default';
 export type NodeShape = 'rect' | 'stadium' | 'rhombus';
 export type EdgeStyle = 'solid' | 'dotted';
 

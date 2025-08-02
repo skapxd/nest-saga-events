@@ -9,6 +9,7 @@ import {
 export class MermaidParserService {
   private graph: CustomGraph;
   private nodeRegistry = new Map<string, string>();
+  private classDefs = new Map<string, string>();
   private nodeIdCounter = 0;
 
   constructor() {
@@ -18,7 +19,12 @@ export class MermaidParserService {
   public clear(): void {
     this.graph = { nodes: [], edges: [] };
     this.nodeRegistry.clear();
+    this.classDefs.clear();
     this.nodeIdCounter = 0;
+  }
+
+  public addClassDef(name: string, style: string): void {
+    this.classDefs.set(name, style);
   }
 
   private getNodeId(name: string): string {
@@ -57,11 +63,25 @@ export class MermaidParserService {
   public build(): string {
     let mermaidCode = 'graph TD;\n\n';
 
-    mermaidCode += `    classDef emitterStyle fill:#d4edda,stroke:#c3e6cb,color:#155724\n`;
-    mermaidCode += `    classDef handlerStyle fill:#d1ecf1,stroke:#bee5eb,color:#0c5460\n`;
-    mermaidCode += `    classDef listenerStyle fill:#fff3cd,stroke:#ffeeba,color:#856404\n`;
-    mermaidCode += `    classDef eventStyle fill:#f8d7da,stroke:#f5c6cb,color:#721c24,stroke-width:2px,font-weight:bold\n`;
-    mermaidCode += `    classDef gateStyle fill:#e2e3e5,stroke:#d6d8db,color:#383d41\n\n`;
+    // Add default styles that can be overridden
+    this.addClassDef(
+      'emitterStyle',
+      'fill:#d4edda,stroke:#c3e6cb,color:#155724',
+    );
+    this.addClassDef(
+      'handlerStyle',
+      'fill:#d1ecf1,stroke:#bee5eb,color:#0c5460',
+    );
+    this.addClassDef(
+      'listenerStyle',
+      'fill:#fff3cd,stroke:#ffeeba,color:#856404',
+    );
+    this.addClassDef('gateStyle', 'fill:#e2e3e5,stroke:#d6d8db,color:#383d41');
+
+    for (const [name, style] of this.classDefs.entries()) {
+      mermaidCode += `    classDef ${name} ${style}\n`;
+    }
+    mermaidCode += '\n';
 
     mermaidCode += `    subgraph "Flujo de Eventos"\n`;
     for (const node of this.graph.nodes) {
@@ -138,7 +158,6 @@ export class MermaidParserService {
     mermaidCode += `    class ${legendEmitterId} emitterStyle\n`;
     mermaidCode += `    class ${legendHandlerId} handlerStyle\n`;
     mermaidCode += `    class ${legendListenerId} listenerStyle\n`;
-    mermaidCode += `    class ${legendEventId} eventStyle\n`;
     mermaidCode += `    class ${legendGateId} gateStyle\n`;
 
     for (const node of this.graph.nodes) {

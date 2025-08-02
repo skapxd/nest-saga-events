@@ -23,6 +23,6 @@
 - `[x] Tarea 3: Actualizar un servicio de ejemplo para usar `@OnEventDoc` con un array.`
 - `[x] Tarea 4: Verificar que el diagrama Mermaid generado es correcto.`
 - `[x] **VERIFICACIÓN ÉPICA 2:** Ejecutar `yarn build`.`
-- `[ ] **COMMIT ÉPICA 2:** docs(saga-event): update example to use @OnEventDoc with multiple events`
+- `[x] **COMMIT ÉPICA 2:** docs(saga-event): update example to use @OnEventDoc with multiple events`
 
 ---
