@@ -1,12 +1,15 @@
+import { AppEventName } from '../types';
+
 export interface EmitterInfo {
-  eventName: string;
+  eventName: AppEventName;
   className: string;
   methodName: string;
   description: string;
+  triggeredBy?: string[];
 }
 
 export interface ListenerInfo {
-  eventName: string;
+  eventName: AppEventName;
   className: string;
   methodName: string;
 }

@@ -23,11 +23,19 @@ interface EventDefinition {
   payload?: new (...args: any[]) => any;
 }
 
-export const EmitsEvent = (options: {
+export interface EmitsEventOptions {
   onInit?: EventDefinition;
   onSuccess: EventDefinition;
   onFailure: EventDefinition;
-}): MethodDecorator => {
+  /**
+   * Optional. If true (default), returning null or undefined from the decorated
+   * method will prevent the onSuccess event from being emitted.
+   * Set to false to allow events with null or undefined payloads.
+   */
+  earlyReturn?: boolean;
+}
+
+export const EmitsEvent = (options: EmitsEventOptions): MethodDecorator => {
   const logger = new Logger(EmitsEvent.name);
   const validationPipe = new ValidationPipe({
     whitelist: true,
@@ -96,6 +104,16 @@ export const EmitsEvent = (options: {
 
       try {
         const result = (await originalMethod.apply(this, args)) as T;
+
+        // Handle early return: if the method returns null/undefined, suppress the event.
+        const enableEarlyReturn = options.earlyReturn ?? true; // Default to true
+        const resultIsNullish = result === null || result === undefined;
+        if (enableEarlyReturn && resultIsNullish) {
+          logger.debug(
+            `Early return detected for ${className}.${methodName}. Suppressing event emission.`,
+          );
+          return result; // Exit without emitting event
+        }
 
         // --- VALIDATION LOGIC ---
         let successPayload: EventPayload<T> = { metadata, data: result };

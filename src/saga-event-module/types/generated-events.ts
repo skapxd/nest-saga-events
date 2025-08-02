@@ -165,6 +165,25 @@ export const AppEvents = {
   },
 
   /**
+   * Fired when all video processing steps are confirmed to be complete.
+   */
+  VIDEO_READY_TO_PUBLISH: {
+    name: 'video.ready.to.publish',
+    description:
+      'Fired when all video processing steps are confirmed to be complete.',
+    payloadClass: undefined,
+  },
+
+  /**
+   * Fired if the verification process fails.
+   */
+  VIDEO_VERIFICATION_FAILED: {
+    name: 'video.verification.failed',
+    description: 'Fired if the verification process fails.',
+    payloadClass: undefined,
+  },
+
+  /**
    * Fired when the video is fully processed and published.
    */
   VIDEO_PUBLISHED_SUCCESS: {

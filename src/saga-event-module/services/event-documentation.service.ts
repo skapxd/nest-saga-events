@@ -193,7 +193,10 @@ export class EventDocumentationService {
     >(EMITS_EVENT_METADATA_KEY);
     return providers.flatMap((p) =>
       p.meta.flatMap((m) => {
-        const base = { className: m.className, methodName: m.methodName };
+        const base = {
+          className: m.className,
+          methodName: m.methodName,
+        };
         const events = [];
         if (m.onInit)
           events.push({

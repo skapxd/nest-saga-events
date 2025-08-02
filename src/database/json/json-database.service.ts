@@ -61,4 +61,15 @@ export class JsonDatabaseService implements OnModuleInit {
       await this.db.write();
     }
   }
+
+  async deleteFromCollection<T>(
+    collectionName: string,
+    predicate: (item: T) => boolean,
+  ): Promise<void> {
+    await this.db.read();
+    const collection = (this.db.data[collectionName] as T[]) || [];
+    const newCollection = collection.filter((item) => !predicate(item));
+    this.db.data[collectionName] = newCollection;
+    await this.db.write();
+  }
 }

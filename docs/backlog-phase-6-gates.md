@@ -15,14 +15,14 @@
 - `[x] Tarea 1: Modificar la firma de `@OnEventDoc` y su `Metadata` para aceptar `AppEventName | AppEventName[]`.`
 - `[x] Tarea 2: Actualizar `EventDocumentationService` para que genere el grafo correctamente a partir del array de eventos.`
 - `[x] **VERIFICACIÓN ÉPICA 1:** Ejecutar `yarn build`.`
-- `[ ] **COMMIT ÉPICA 1:** feat(saga-event): allow @OnEventDoc to handle multiple events`
+- `[x] **COMMIT ÉPICA 1:** feat(saga-event): allow @OnEventDoc to handle multiple events`
 
 ### Épica 2: Validación y Ejemplo
 **Objetivo:** Demostrar que la nueva funcionalidad se comporta como se espera y está bien documentada para los desarrolladores.
 
-- `[ ] Tarea 3: Actualizar un servicio de ejemplo para usar `@OnEventDoc` con un array.`
-- `[ ] Tarea 4: Verificar que el diagrama Mermaid generado es correcto.`
-- `[ ] **VERIFICACIÓN ÉPICA 2:** Ejecutar `yarn build`.`
+- `[x] Tarea 3: Actualizar un servicio de ejemplo para usar `@OnEventDoc` con un array.`
+- `[x] Tarea 4: Verificar que el diagrama Mermaid generado es correcto.`
+- `[x] **VERIFICACIÓN ÉPICA 2:** Ejecutar `yarn build`.`
 - `[ ] **COMMIT ÉPICA 2:** docs(saga-event): update example to use @OnEventDoc with multiple events`
 
 ---
