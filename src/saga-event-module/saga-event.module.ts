@@ -50,10 +50,6 @@ import { TypedEventEmitter } from './helpers/typed-event-emitter';
   exports: [RequestContextService, EventMetadataHelper, TypedEventEmitter],
 })
 export class SagaEventModule implements NestModule, OnModuleInit {
-  // Propiedades estáticas para acceder desde cualquier lugar
-  public static eventEmitter: EventEmitter2;
-  public static eventMetadataHelper: EventMetadataHelper;
-
   constructor(
     private readonly eventGeneratorService: EventGeneratorService,
     private readonly eventDocumentationService: EventDocumentationService,
