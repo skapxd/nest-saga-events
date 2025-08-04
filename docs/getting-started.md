@@ -267,3 +267,123 @@ graph TD;
 ```
 
 Esta documentación viva asegura que tu comprensión del flujo de eventos del sistema esté siempre sincronizada con la implementación real.
+
+## 5. Probando tus Servicios
+
+Probar los servicios que utilizan el `SagaEventModule` es sencillo gracias a las herramientas de testing proporcionadas. El objetivo es verificar que tus servicios emiten los eventos correctos bajo las condiciones adecuadas.
+
+### Configuración del Entorno de Pruebas
+
+La clave para las pruebas es el `SagaEventTestingModule`. Este módulo especial prepara un entorno de pruebas de NestJS con todas las dependencias del `SagaEventModule` ya configuradas, incluido un `TypedEventEmitter` que es fácil de espiar.
+
+Así es como se configura un archivo de prueba básico:
+
+```typescript
+// user.service.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from './user.service';
+import { SagaEventTestingModule } from '#/src/saga-event-module/testing/saga-event-testing.module';
+import { TypedEventEmitter } from '#/src/saga-event-module/helpers/typed-event-emitter';
+
+describe('UserService', () => {
+  let service: UserService;
+  let eventEmitter: TypedEventEmitter;
+
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [SagaEventTestingModule], // 1. Importar el módulo de testing
+      providers: [UserService],
+    }).compile();
+
+    // 2. Obtener las instancias del servicio y del emisor de eventos
+    service = module.get<UserService>(UserService);
+    eventEmitter = module.get<TypedEventEmitter>(TypedEventEmitter);
+  });
+
+  // ... tus pruebas aquí ...
+});
+```
+
+### Probando un Método que Emite Eventos (`@EmitsEvent`)
+
+Para probar un método como `createUser` del `UserService`, quieres verificar que emite el evento de éxito o de fallo correctamente. La mejor manera de hacerlo es usando `eventEmitter.waitFor(eventName)`.
+
+Este método devuelve una promesa que se resuelve cuando el evento especificado es emitido.
+
+```typescript
+// user.service.spec.ts
+
+it('should emit user.created.success on successful creation', async () => {
+  // Forzar un resultado exitoso
+  vi.spyOn(Math, 'random').mockReturnValue(0.6);
+
+  const createUserDto: CreateUserDto = {
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+  };
+
+  // 1. Preparar la espera para el evento de éxito
+  const successPromise = eventEmitter.waitFor('user.created.success');
+
+  // 2. Ejecutar el método
+  await service.createUser(createUserDto);
+
+  // 3. Esperar el evento y hacer aserciones sobre su payload
+  const [successEvent] = await successPromise;
+
+  expect(successEvent).toBeDefined();
+  expect(successEvent.data.name).toBe(createUserDto.name);
+  expect(successEvent.metadata.causationId).toBeNull(); // Es el primer evento en la saga
+});
+
+it('should emit user.created.failure on failure', async () => {
+  // Forzar un fallo
+  vi.spyOn(Math, 'random').mockReturnValue(0.4);
+
+  const createUserDto: CreateUserDto = {
+    name: 'John Doe',
+    email: 'john@example.com',
+  };
+
+  // 1. Preparar la espera para el evento de fallo
+  const failurePromise = eventEmitter.waitFor('user.created.failure');
+
+  // 2. Ejecutar el método (y esperar que lance una excepción)
+  await expect(service.createUser(createUserDto)).rejects.toThrow();
+
+  // 3. Esperar el evento de fallo y verificar el error
+  const [failureEvent] = await failurePromise;
+
+  expect(failureEvent).toBeDefined();
+  expect(failureEvent.data).toBeInstanceOf(Error);
+  expect(failureEvent.data.message).toContain('Random failure');
+});
+```
+
+### Probando un Método que Escucha Eventos (`@OnEventDoc`)
+
+Para probar un servicio que reacciona a un evento, como `NotificationService`, necesitas simular el evento entrante. El módulo proporciona una utilidad `createCausationEventPayload` para facilitar esto.
+
+```typescript
+// notification.service.spec.ts
+import { createCausationEventPayload } from '#/src/saga-event-module/testing/payload-factory';
+import { EventPayload } from '#/src/saga-event-module/interfaces/event.interfaces';
+
+it('should log a success message when handling user.created.success', () => {
+  const loggerSpy = vi.spyOn(Logger.prototype, 'log');
+
+  // 1. Crear un payload de evento de causación falso
+  const userPayload = { id: '123', name: 'John Doe', email: 'john@example.com' };
+  const causationPayload = createCausationEventPayload(userPayload);
+
+  // 2. Ejecutar el método del listener con el payload falso
+  service.handleUserCreatedSuccess(causationPayload);
+
+  // 3. Verificar que el servicio reaccionó como se esperaba
+  expect(loggerSpy).toHaveBeenCalledWith(
+    expect.stringContaining('Sending welcome email to John Doe'),
+  );
+});
+```
+
+Con estas herramientas, puedes construir una suite de pruebas robusta que garantiza que la coreografía de tu saga funciona exactamente como la diseñaste.

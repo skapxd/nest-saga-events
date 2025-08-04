@@ -313,3 +313,14 @@ Este documento es la única fuente de verdad para la construcción del `SagaEven
 
 - [x] **VERIFICACIÓN FINAL:** Ejecutar `yarn build`.
 - [x] **COMMIT FINAL:** Crear un commit semántico en español.
+
+---
+
+## Fase 6: Tareas Post-Implementación
+
+- [x] **Tarea 14: Documentar Pruebas Unitarias y de Integración.**
+  - **Descripción:** Añadir una sección a `getting-started.md` que explique cómo probar los servicios que usan `@EmitsEvent` y `@OnEventDoc`.
+  - **Detalles:**
+    - Explicar el rol de `SagaEventTestingModule`.
+    - Mostrar cómo usar `TypedEventEmitter.waitFor()` para verificar la emisión de eventos.
+    - Demostrar el uso de `createCausationEventPayload` para simular eventos entrantes.

@@ -30,7 +30,7 @@ export class EventGeneratorService {
 
     const events = new Map<
       string,
-      { description?: string; payloadName?: string }
+      { description?: string; payloadName?: string; type: string }
     >();
     const payloadImports = new Set<string>();
 
@@ -39,13 +39,28 @@ export class EventGeneratorService {
 
       for (const metadata of metadataList) {
         if (metadata.onInit) {
-          await this.addEvent(events, payloadImports, metadata.onInit);
+          await this.addEvent(
+            events,
+            payloadImports,
+            metadata.onInit,
+            'onInit',
+          );
         }
         if (metadata.onSuccess) {
-          await this.addEvent(events, payloadImports, metadata.onSuccess);
+          await this.addEvent(
+            events,
+            payloadImports,
+            metadata.onSuccess,
+            'onSuccess',
+          );
         }
         if (metadata.onFailure) {
-          await this.addEvent(events, payloadImports, metadata.onFailure);
+          await this.addEvent(
+            events,
+            payloadImports,
+            metadata.onFailure,
+            'onFailure',
+          );
         }
       }
     }
@@ -90,13 +105,17 @@ export class EventGeneratorService {
   }
 
   private async addEvent(
-    events: Map<string, { description?: string; payloadName?: string }>,
+    events: Map<
+      string,
+      { description?: string; payloadName?: string; type: string }
+    >,
     payloadImports: Set<string>,
     eventDefinition: {
       name: string;
       description?: string;
       payload?: new (...args: any[]) => any;
     },
+    type: string,
   ) {
     const eventName = eventDefinition.name;
     const payloadName = eventDefinition.payload?.name;
@@ -108,6 +127,7 @@ export class EventGeneratorService {
     events.set(eventName, {
       description: eventDefinition.description ?? '',
       payloadName,
+      type,
     });
 
     if (payloadName) {
@@ -153,11 +173,14 @@ export class EventGeneratorService {
   }
 
   private generateFileContent(
-    events: Map<string, { description?: string; payloadName?: string }>,
+    events: Map<
+      string,
+      { description?: string; payloadName?: string; type: string }
+    >,
     payloadImports: Set<string>,
   ): string {
     const eventDefinitions = Array.from(events.entries()).map(
-      ([eventName, { description, payloadName }]) => {
+      ([eventName, { description, payloadName, type }]) => {
         const eventConstantName = eventName.toUpperCase().replace(/\./g, '_');
         return `
         /**
@@ -165,6 +188,7 @@ export class EventGeneratorService {
          */
         '${eventConstantName}': {
           name: '${eventName}',
+          type: '${type}',
           description: '${description}',
           payloadClass: ${payloadName},
         },

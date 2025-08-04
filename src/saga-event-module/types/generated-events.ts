@@ -7,6 +7,7 @@ export const AppEvents = {
    */
   USER_CREATION_INIT: {
     name: 'user.creation.init',
+    type: 'onInit',
     description: '',
     payloadClass: undefined,
   },
@@ -16,6 +17,7 @@ export const AppEvents = {
    */
   USER_CREATED_SUCCESS: {
     name: 'user.created.success',
+    type: 'onSuccess',
     description: '',
     payloadClass: undefined,
   },
@@ -25,6 +27,7 @@ export const AppEvents = {
    */
   USER_CREATED_FAILURE: {
     name: 'user.created.failure',
+    type: 'onFailure',
     description: '',
     payloadClass: undefined,
   },
@@ -34,6 +37,7 @@ export const AppEvents = {
    */
   USER_BUFFER_SUCCESS: {
     name: 'user.buffer.success',
+    type: 'onSuccess',
     description: '',
     payloadClass: undefined,
   },
@@ -43,6 +47,7 @@ export const AppEvents = {
    */
   USER_BUFFER_FAILURE: {
     name: 'user.buffer.failure',
+    type: 'onFailure',
     description: '',
     payloadClass: undefined,
   },
@@ -52,6 +57,7 @@ export const AppEvents = {
    */
   VIDEO_UPLOADED: {
     name: 'video.uploaded',
+    type: 'onSuccess',
     description: 'Fired when a video is uploaded and ready for processing.',
     payloadClass: undefined,
   },
@@ -61,6 +67,7 @@ export const AppEvents = {
    */
   VIDEO_UPLOAD_FAILED: {
     name: 'video.upload.failed',
+    type: 'onFailure',
     description: 'Fired if the initial video upload processing fails.',
     payloadClass: undefined,
   },
@@ -70,6 +77,7 @@ export const AppEvents = {
    */
   VIDEO_TRANSCODED_SUCCESS: {
     name: 'video.transcoded.success',
+    type: 'onSuccess',
     description: 'Fired when video transcoding is complete.',
     payloadClass: undefined,
   },
@@ -79,6 +87,7 @@ export const AppEvents = {
    */
   VIDEO_TRANSCODED_FAILURE: {
     name: 'video.transcoded.failure',
+    type: 'onFailure',
     description: 'Fired if video transcoding fails.',
     payloadClass: undefined,
   },
@@ -88,6 +97,7 @@ export const AppEvents = {
    */
   THUMBNAIL_GENERATED_SUCCESS: {
     name: 'thumbnail.generated.success',
+    type: 'onSuccess',
     description: 'Fired when a video thumbnail is generated.',
     payloadClass: undefined,
   },
@@ -97,6 +107,7 @@ export const AppEvents = {
    */
   THUMBNAIL_GENERATED_FAILURE: {
     name: 'thumbnail.generated.failure',
+    type: 'onFailure',
     description: 'Fired if thumbnail generation fails.',
     payloadClass: undefined,
   },
@@ -106,6 +117,7 @@ export const AppEvents = {
    */
   VIDEO_READY_TO_PUBLISH: {
     name: 'video.ready.to.publish',
+    type: 'onSuccess',
     description:
       'Fired when all video processing steps are confirmed to be complete.',
     payloadClass: undefined,
@@ -116,6 +128,7 @@ export const AppEvents = {
    */
   VIDEO_VERIFICATION_FAILED: {
     name: 'video.verification.failed',
+    type: 'onFailure',
     description: 'Fired if the verification process fails.',
     payloadClass: undefined,
   },
@@ -125,6 +138,7 @@ export const AppEvents = {
    */
   VIDEO_PUBLISHED_SUCCESS: {
     name: 'video.published.success',
+    type: 'onSuccess',
     description: 'Fired when the video is fully processed and published.',
     payloadClass: undefined,
   },
@@ -134,6 +148,7 @@ export const AppEvents = {
    */
   VIDEO_PUBLISHED_FAILURE: {
     name: 'video.published.failure',
+    type: 'onFailure',
     description: 'Fired if the final publishing step fails.',
     payloadClass: undefined,
   },
